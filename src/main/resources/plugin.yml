@@ -1,0 +1,22 @@
+name: TimePerDayWhitelist
+version: '${project.version}'
+main: de.niliees.timeperday.TimePerDayPlugin
+api-version: '1.21'
+description: Begrenzt die tägliche Spielzeit pro Spieler
+authors: [ niliees ]
+folia-supported: true
+
+commands:
+  timeperday:
+    description: Verwalte die täglichen Spielzeitlimits
+    usage: /timeperday <subcommand>
+    permission: timeperday.admin
+    aliases: [ tpd ]
+
+permissions:
+  timeperday.admin:
+    description: Zugriff auf alle TimePerDay-Befehle
+    default: op
+  timeperday.bypass:
+    description: Umgeht das tägliche Spielzeitlimit (wie Whitelist)
+    default: false

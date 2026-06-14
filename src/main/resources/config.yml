@@ -1,0 +1,25 @@
+# ============================================================
+#  TimePerDayWhitelist - Konfiguration
+# ============================================================
+
+# Standard-Tageslimit in Minuten (gilt für alle Spieler ohne
+# individuelles Limit).
+default-limit-minutes: 120
+
+# Warn-Nachrichten: bei wie vielen verbleibenden Sekunden
+# wird der Spieler gewarnt?  (Liste von Sekundenwerten)
+warnings:
+  - 300   # 5 Minuten
+  - 60    # 1 Minute
+  - 30    # 30 Sekunden
+  - 10    # 10 Sekunden
+
+# Nachrichten (unterstützt MiniMessage-Format)
+messages:
+  kick-line1: "<red>Deine tägliche Spielzeit ist aufgebraucht!"
+  kick-line2: "<gray>Du kannst morgen wieder spielen."
+  warning: "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"
+  join-info: "<green>Verbleibende Spielzeit heute: <yellow>{remaining}"
+
+# Ob beim Einloggen die verbleibende Zeit angezeigt wird
+show-on-join: true
