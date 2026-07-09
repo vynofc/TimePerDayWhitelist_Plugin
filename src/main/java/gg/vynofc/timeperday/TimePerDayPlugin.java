@@ -1,8 +1,9 @@
-package de.niliees.timeperday;
+package gg.vynofc.timeperday;
 
-import de.niliees.timeperday.command.TimeCommand;
-import de.niliees.timeperday.listener.PlayerListener;
-import de.niliees.timeperday.manager.PlayerTimeManager;
+import gg.vynofc.timeperday.command.TimeCommand;
+import gg.vynofc.timeperday.command.AdminTimeCommand;
+import gg.vynofc.timeperday.listener.PlayerListener;
+import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.concurrent.TimeUnit;
@@ -20,11 +21,17 @@ public class TimePerDayPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager), this);
 
-        TimeCommand cmd = new TimeCommand(this, timeManager);
-        var command = getCommand("timeperday");
-        if (command != null) {
-            command.setExecutor(cmd);
-            command.setTabCompleter(cmd);
+        AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager);
+        var adminCommand = getCommand("admintime");
+        if (adminCommand != null) {
+            adminCommand.setExecutor(adminCmd);
+            adminCommand.setTabCompleter(adminCmd);
+        }
+
+        TimeCommand timeCmd = new TimeCommand(timeManager);
+        var timeCommand = getCommand("time");
+        if (timeCommand != null) {
+            timeCommand.setExecutor(timeCmd);
         }
 
         // Folia & Paper 1.21+: AsyncScheduler – sekündliches Tick

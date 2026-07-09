@@ -1,17 +1,21 @@
 name: TimePerDayWhitelist
 version: '${project.version}'
-main: de.niliees.timeperday.TimePerDayPlugin
+main: gg.vynofc.timeperday.TimePerDayPlugin
 api-version: '1.21'
 description: Begrenzt die tägliche Spielzeit pro Spieler
 authors: [ niliees ]
 folia-supported: true
 
 commands:
-  timeperday:
+  admintime:
     description: Verwalte die täglichen Spielzeitlimits
-    usage: /timeperday <subcommand>
+    usage: /admintime <subcommand>
     permission: timeperday.admin
-    aliases: [ tpd ]
+    aliases: [ timeperday, tpd ]
+  time:
+    description: Zeigt die verbleibende Spielzeit für den Tag an
+    usage: /time
+    permission: timeperday.use
 
 permissions:
   timeperday.admin:
@@ -20,3 +24,6 @@ permissions:
   timeperday.bypass:
     description: Umgeht das tägliche Spielzeitlimit (wie Whitelist)
     default: false
+  timeperday.use:
+    description: Zugriff auf die TimePerDay-Funktionalität
+    default: true

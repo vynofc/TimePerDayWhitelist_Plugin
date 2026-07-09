@@ -1,7 +1,7 @@
-package de.niliees.timeperday.listener;
+package gg.vynofc.timeperday.listener;
 
-import de.niliees.timeperday.TimePerDayPlugin;
-import de.niliees.timeperday.manager.PlayerTimeManager;
+import gg.vynofc.timeperday.TimePerDayPlugin;
+import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.event.EventHandler;

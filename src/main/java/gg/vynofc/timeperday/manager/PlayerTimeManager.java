@@ -1,6 +1,6 @@
-package de.niliees.timeperday.manager;
+package gg.vynofc.timeperday.manager;
 
-import de.niliees.timeperday.TimePerDayPlugin;
+import gg.vynofc.timeperday.TimePerDayPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;

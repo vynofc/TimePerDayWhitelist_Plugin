@@ -1,7 +1,7 @@
-package de.niliees.timeperday.command;
+package gg.vynofc.timeperday.command;
 
-import de.niliees.timeperday.TimePerDayPlugin;
-import de.niliees.timeperday.manager.PlayerTimeManager;
+import gg.vynofc.timeperday.TimePerDayPlugin;
+import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -18,12 +18,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TimeCommand implements CommandExecutor, TabCompleter {
+public class AdminTimeCommand implements CommandExecutor, TabCompleter {
 
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
 
-    public TimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager) {
+    public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager) {
         this.plugin = plugin;
         this.timeManager = timeManager;
     }
@@ -63,10 +63,10 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
     // Subcommands
     // -------------------------------------------------------------------------
 
-    /** /timeperday set <Spieler> <Minuten> */
+    /** /admintime set <Spieler> <Minuten> */
     private void handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(error("Verwendung: /timeperday set <Spieler> <Minuten>"));
+            sender.sendMessage(error("Verwendung: /admintime set <Spieler> <Minuten>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -88,12 +88,12 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** /timeperday info [Spieler] */
+    /** /admintime info [Spieler] */
     private void handleInfo(CommandSender sender, String[] args) {
         OfflinePlayer target;
         if (args.length < 2) {
             if (!(sender instanceof Player p)) {
-                sender.sendMessage(error("Verwendung: /timeperday info <Spieler>"));
+                sender.sendMessage(error("Verwendung: /admintime info <Spieler>"));
                 return;
             }
             target = p;
@@ -116,10 +116,10 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(info("Whitelist (unbegrenzt)", wl ? "Ja" : "Nein"));
     }
 
-    /** /timeperday reset <Spieler> */
+    /** /admintime reset <Spieler> */
     private void handleReset(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(error("Verwendung: /timeperday reset <Spieler>"));
+            sender.sendMessage(error("Verwendung: /admintime reset <Spieler>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -133,10 +133,10 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
                 .build());
     }
 
-    /** /timeperday setdefault <Minuten> */
+    /** /admintime setdefault <Minuten> */
     private void handleSetDefault(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(error("Verwendung: /timeperday setdefault <Minuten>"));
+            sender.sendMessage(error("Verwendung: /admintime setdefault <Minuten>"));
             return;
         }
         try {
@@ -151,10 +151,10 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** /timeperday whitelist <add|remove> <Spieler> */
+    /** /admintime whitelist <add|remove> <Spieler> */
     private void handleWhitelist(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(error("Verwendung: /timeperday whitelist <add|remove> <Spieler>"));
+            sender.sendMessage(error("Verwendung: /admintime whitelist <add|remove> <Spieler>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[2]);
@@ -174,11 +174,11 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
                         NamedTextColor.GREEN));
             }
             default -> sender.sendMessage(error(
-                    "Verwendung: /timeperday whitelist <add|remove> <Spieler>"));
+                    "Verwendung: /admintime whitelist <add|remove> <Spieler>"));
         }
     }
 
-    /** /timeperday reload */
+    /** /admintime reload */
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
         timeManager.reload();
@@ -269,12 +269,12 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(Component.text("=== TimePerDay Befehle ===", NamedTextColor.GOLD));
-        helpLine(sender, "/timeperday set <Spieler> <Minuten>",        "Individuelles Tageslimit setzen");
-        helpLine(sender, "/timeperday info [Spieler]",                 "Spielzeitinfo anzeigen");
-        helpLine(sender, "/timeperday reset <Spieler>",                "Heutige Spielzeit zurücksetzen");
-        helpLine(sender, "/timeperday setdefault <Minuten>",           "Standard-Tageslimit setzen");
-        helpLine(sender, "/timeperday whitelist <add|remove> <Spieler>", "Whitelist verwalten (unbegrenzt)");
-        helpLine(sender, "/timeperday reload",                         "Konfiguration neu laden");
+        helpLine(sender, "/admintime set <Spieler> <Minuten>",        "Individuelles Tageslimit setzen");
+        helpLine(sender, "/admintime info [Spieler]",                 "Spielzeitinfo anzeigen");
+        helpLine(sender, "/admintime reset <Spieler>",                "Heutige Spielzeit zurücksetzen");
+        helpLine(sender, "/admintime setdefault <Minuten>",           "Standard-Tageslimit setzen");
+        helpLine(sender, "/admintime whitelist <add|remove> <Spieler>", "Whitelist verwalten (unbegrenzt)");
+        helpLine(sender, "/admintime reload",                         "Konfiguration neu laden");
     }
 
     private void helpLine(CommandSender sender, String cmd, String desc) {
