@@ -13,6 +13,8 @@ Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 - Level-basierte Spawn-Kits in 10er-Stufen bis Level 150
 - Join-/Kick-/Time-Anzeige mit Level-Informationen
 - Admin-Funktionen für Zeit und Level
+- Ingame-Admin-Kisten-UI für Spielerverwaltung, Limits, Level, Whitelist, Reload und Global-Reset
+- Konfigurierte MiniMessage-Nachrichten werden tatsächlich als formatierte Components gerendert
 
 ## Installation
 
@@ -65,6 +67,7 @@ Frühe Stufen:
 | `/admintime setlevel <Spieler> <Level>` | Gesamtlevel setzen | `timeperday.admin` |
 | `/admintime addlevel <Spieler> <Level>` | Gesamtlevel addieren | `timeperday.admin` |
 | `/admintime whitelist <add\|remove> <Spieler>` | Zeitlimit-Bypass verwalten | `timeperday.admin` |
+| `/admintime gui` | Öffnet die Ingame-Adminoberfläche | `timeperday.admin` |
 | `/admintime reload` | Config und Daten neu laden | `timeperday.admin` |
 
 ## Wichtige Config-Bereiche
@@ -74,6 +77,12 @@ Frühe Stufen:
 - `messages.*`
 - `progression.points-per-item.*`
 - `progression.spawn-kits.*`
+
+## Admin-GUI
+
+- `/admintime gui` öffnet eine Kistenoberfläche für Admins.
+- Dort können Spieler ausgewählt und Limits, heutige Zeit, Gesamtlevel und Whitelist verwaltet werden.
+- Reload und Global-Reset sind ebenfalls über die GUI erreichbar.
 
 ## Hinweis
 

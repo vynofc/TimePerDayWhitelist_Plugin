@@ -1,6 +1,7 @@
 package gg.vynofc.timeperday.command;
 
 import gg.vynofc.timeperday.TimePerDayPlugin;
+import gg.vynofc.timeperday.gui.AdminMenuService;
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -22,10 +23,13 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
 
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
+    private final AdminMenuService adminMenuService;
 
-    public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager) {
+    public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager,
+                            AdminMenuService adminMenuService) {
         this.plugin = plugin;
         this.timeManager = timeManager;
+        this.adminMenuService = adminMenuService;
     }
 
     // -------------------------------------------------------------------------
@@ -56,6 +60,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
             case "resetplayer"-> handleResetPlayer(sender, args);
             case "setdefault" -> handleSetDefault(sender, args);
             case "whitelist"  -> handleWhitelist(sender, args);
+            case "gui"        -> handleGui(sender, args);
             case "reload"     -> handleReload(sender);
             default           -> sendHelp(sender);
         }
@@ -105,22 +110,22 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
             if (target == null) return;
         }
 
-        var uuid = target.getUniqueId();
-        long played    = timeManager.getPlayedToday(uuid);
-        long limit     = timeManager.getLimit(uuid);
-        long remaining = Math.max(0L, limit - played);
-        double points  = timeManager.getSessionPoints(uuid);
-        double level   = timeManager.getTotalLevel(uuid);
-        boolean wl     = timeManager.isWhitelisted(uuid);
+        var snapshot = target.getPlayer() != null
+                ? timeManager.getSnapshot(target.getPlayer())
+                : timeManager.getSnapshot(target.getUniqueId(), false);
 
         sender.sendMessage(Component.text(
                 "--- Spielzeitinfo: " + safeName(target) + " ---", NamedTextColor.GOLD));
-        sender.sendMessage(info("Gespielt heute", PlayerTimeManager.formatTime(played)));
-        sender.sendMessage(info("Tageslimit", PlayerTimeManager.formatTime(limit)));
-        sender.sendMessage(info("Verbleibend", PlayerTimeManager.formatTime(remaining)));
-        sender.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(points)));
-        sender.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(level)));
-        sender.sendMessage(info("Whitelist (unbegrenzt)", wl ? "Ja" : "Nein"));
+        sender.sendMessage(info("Gespielt heute", PlayerTimeManager.formatTime(snapshot.played())));
+        sender.sendMessage(info("Tageslimit", snapshot.unlimited()
+                ? "Unbegrenzt"
+                : PlayerTimeManager.formatTime(snapshot.limit())));
+        sender.sendMessage(info("Verbleibend", snapshot.unlimited()
+                ? "Unbegrenzt"
+                : PlayerTimeManager.formatTime(snapshot.remaining())));
+        sender.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
+        sender.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
+        sender.sendMessage(info("Whitelist (unbegrenzt)", snapshot.whitelisted() ? "Ja" : "Nein"));
     }
 
     /** /admintime setlevel <Spieler> <Level> */
@@ -252,6 +257,19 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("Konfiguration neu geladen.", NamedTextColor.GREEN));
     }
 
+    /** /admintime gui */
+    private void handleGui(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(error("Die Admin-GUI kann nur von Spielern geöffnet werden."));
+            return;
+        }
+        if (args.length > 1) {
+            sender.sendMessage(error("Verwendung: /admintime gui"));
+            return;
+        }
+        adminMenuService.openMainMenu(player);
+    }
+
     // -------------------------------------------------------------------------
     // Tab-Vervollständigung
     // -------------------------------------------------------------------------
@@ -265,7 +283,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             return filter(Arrays.asList("set", "info", "setlevel", "addlevel", "reset", "resetplayer",
-                    "setdefault", "whitelist", "reload"),
+                    "setdefault", "whitelist", "gui", "reload"),
                     args[0]);
         }
 
@@ -344,6 +362,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         helpLine(sender, "/admintime resetplayer <Spieler>",          "Einzelnen Spieler zurücksetzen");
         helpLine(sender, "/admintime setdefault <Minuten>",           "Standard-Tageslimit setzen");
         helpLine(sender, "/admintime whitelist <add|remove> <Spieler>", "Whitelist verwalten (unbegrenzt)");
+        helpLine(sender, "/admintime gui",                            "Ingame-Adminoberfläche öffnen");
         helpLine(sender, "/admintime reload",                         "Konfiguration neu laden");
     }
 

@@ -2,7 +2,7 @@ package gg.vynofc.timeperday.manager;
 
 import gg.vynofc.timeperday.TimePerDayPlugin;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.GameMode;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -35,6 +35,7 @@ import java.util.logging.Level;
 public class PlayerTimeManager {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     private final TimePerDayPlugin plugin;
 
@@ -53,6 +54,7 @@ public class PlayerTimeManager {
 
     private volatile long defaultLimitSeconds;
     private volatile String currentDate;
+    private volatile NavigableMap<Integer, Map<Material, Integer>> spawnKits = new TreeMap<>();
     private long tickCount = 0;
 
     private final File dataFile;
@@ -96,6 +98,7 @@ public class PlayerTimeManager {
         loadBooleanSection("whitelist", whitelist);
         loadDoubleSection("total-level", totalLevel);
         loadStringSection("last-kit-claim-date", lastKitClaimDate);
+        spawnKits = readSpawnKits();
     }
 
     public synchronized void save() {
@@ -130,7 +133,7 @@ public class PlayerTimeManager {
     // Tick (jede Sekunde, aus AsyncScheduler aufgerufen)
     // -------------------------------------------------------------------------
 
-    public void tick() {
+    public void tickOnlinePlayers() {
         // Tageswechsel prüfen
         String today = LocalDate.now().format(DATE_FORMAT);
         if (!today.equals(currentDate)) {
@@ -143,27 +146,7 @@ public class PlayerTimeManager {
         List<Long> warningThresholds = plugin.getConfig().getLongList("warnings");
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            UUID uuid = player.getUniqueId();
-
-            // Befreiung prüfen (Whitelist-Eintrag ODER Bypass-Permission)
-            if (whitelist.getOrDefault(uuid, false) || player.hasPermission("timeperday.bypass")) {
-                continue;
-            }
-
-            long played = playedToday.merge(uuid, 1L, Long::sum);
-            long limit = getLimit(uuid);
-            long remaining = limit - played;
-
-            // Warnungen
-            if (warningThresholds.contains(remaining)) {
-                sendWarning(player, remaining);
-            }
-
-            // Limit überschritten → rauswerfen
-            if (remaining <= 0) {
-                double gained = finalizeSessionProgress(uuid);
-                kickPlayer(player, gained, getTotalLevel(uuid));
-            }
+            player.getScheduler().run(plugin, task -> tickPlayer(player, warningThresholds), null);
         }
 
         // Alle 5 Minuten speichern
@@ -173,58 +156,63 @@ public class PlayerTimeManager {
         }
     }
 
+    private void tickPlayer(Player player, List<Long> warningThresholds) {
+        if (!player.isOnline()) {
+            return;
+        }
+
+        UUID uuid = player.getUniqueId();
+        if (isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
+            return;
+        }
+
+        long played = playedToday.merge(uuid, 1L, Long::sum);
+        long limit = getLimit(uuid);
+        long remaining = limit - played;
+
+        if (warningThresholds.contains(remaining)) {
+            sendWarning(player, remaining);
+        }
+
+        if (remaining <= 0) {
+            double gained = finalizeSessionProgress(uuid);
+            kickPlayer(player, gained, getTotalLevel(uuid));
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Interne Helfer
     // -------------------------------------------------------------------------
 
     private void sendWarning(Player player, long remainingSeconds) {
-        String formatted = formatTime(remainingSeconds);
-        String template = plugin.getConfig().getString("messages.warning",
-                "<yellow>⚠ {remaining} verbleibende Spielzeit heute!");
-        String msg = template.replace("{remaining}", formatted);
-
-        // Folia: auf den Thread des Spielers planen
-        player.getScheduler().run(plugin, task ->
-                player.sendMessage(Component.text(stripMiniMessage(msg), NamedTextColor.YELLOW)), null);
+        player.sendMessage(buildConfiguredMessage(
+                plugin.getConfig().getString("messages.warning",
+                        "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"),
+                Map.of("{remaining}", formatTime(remainingSeconds))));
     }
 
     private void kickPlayer(Player player, double gainedLevel, double totalLevelValue) {
+        player.kick(buildKickComponent(player.getUniqueId(), gainedLevel, totalLevelValue));
+    }
+
+    private Component buildKickComponent(UUID uuid, double gainedLevel, double totalLevelValue) {
         String line1Template = plugin.getConfig().getString(
                 "messages.kick-line1",
                 "<red>Deine tägliche Spielzeit ist aufgebraucht! +{gained-level} Level (Gesamt: {total-level})");
-        String line1 = applyPlaceholders(line1Template, Map.of(
+        Component line1 = buildConfiguredMessage(line1Template, Map.of(
                 "{gained-level}", formatLevel(gainedLevel),
                 "{total-level}", formatLevel(totalLevelValue),
-                "{session-points}", formatLevel(getSessionPoints(player.getUniqueId()))
+                "{session-points}", formatLevel(getSessionPoints(uuid))
         ));
-        String line2 = stripMiniMessage(plugin.getConfig().getString(
-                "messages.kick-line2", "Du kannst morgen wieder spielen."));
+        Component line2 = buildConfiguredMessage(
+                plugin.getConfig().getString("messages.kick-line2", "<gray>Du kannst morgen wieder spielen."),
+                Map.of());
 
-        player.getScheduler().run(plugin, task ->
-                player.kick(Component.text()
-                        .append(Component.text(stripMiniMessage(line1), NamedTextColor.RED))
-                        .appendNewline()
-                        .append(Component.text(line2, NamedTextColor.GRAY))
-                        .build()), null);
+        return Component.text().append(line1).appendNewline().append(line2).build();
     }
 
     public Component buildJoinKickComponent(UUID uuid) {
-        String line1Template = plugin.getConfig().getString(
-                "messages.kick-line1",
-                "<red>Deine tägliche Spielzeit ist aufgebraucht! +{gained-level} Level (Gesamt: {total-level})");
-        String line1 = applyPlaceholders(line1Template, Map.of(
-                "{gained-level}", "0",
-                "{total-level}", formatLevel(getTotalLevel(uuid)),
-                "{session-points}", formatLevel(getSessionPoints(uuid))
-        ));
-        String line2 = stripMiniMessage(plugin.getConfig().getString(
-                "messages.kick-line2", "Du kannst morgen wieder spielen."));
-
-        return Component.text()
-                .append(Component.text(stripMiniMessage(line1), NamedTextColor.RED))
-                .appendNewline()
-                .append(Component.text(line2, NamedTextColor.GRAY))
-                .build();
+        return buildKickComponent(uuid, 0.0D, getTotalLevel(uuid));
     }
 
     private double finalizeSessionProgress(UUID uuid) {
@@ -237,17 +225,16 @@ public class PlayerTimeManager {
         return gained;
     }
 
-    /** Entfernt einfache MiniMessage-Tags für die Konsolen-/Plain-Ausgabe. */
-    private String stripMiniMessage(String text) {
-        return text.replaceAll("<[^>]+>", "");
-    }
-
     private String applyPlaceholders(String text, Map<String, String> placeholders) {
         String out = text;
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
             out = out.replace(entry.getKey(), entry.getValue());
         }
         return out;
+    }
+
+    private Component buildConfiguredMessage(String template, Map<String, String> placeholders) {
+        return MINI_MESSAGE.deserialize(applyPlaceholders(template, placeholders));
     }
 
     private void loadSection(String path, ConcurrentHashMap<UUID, Long> map) {
@@ -394,9 +381,8 @@ public class PlayerTimeManager {
     }
 
     public int getBestKitLevelFor(double level) {
-        var kits = readSpawnKits();
         int best = 0;
-        for (Integer threshold : kits.keySet()) {
+        for (Integer threshold : spawnKits.keySet()) {
             if (level >= threshold) {
                 best = threshold;
             }
@@ -420,7 +406,7 @@ public class PlayerTimeManager {
             return false;
         }
 
-        var kit = readSpawnKits().get(kitLevel);
+        var kit = spawnKits.get(kitLevel);
         if (kit == null || kit.isEmpty()) {
             return false;
         }
@@ -461,15 +447,16 @@ public class PlayerTimeManager {
 
         currentDate = LocalDate.now().format(DATE_FORMAT);
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            resetOnlinePlayerState(player);
-        }
-
-        for (World world : Bukkit.getWorlds()) {
-            resetWorldRuntimeState(world);
-        }
-
         save();
+        plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.getScheduler().run(plugin, scheduledTask -> resetOnlinePlayerState(player), null);
+            }
+
+            for (World world : Bukkit.getWorlds()) {
+                resetWorldRuntimeState(world);
+            }
+        });
     }
 
     private void resetOnlinePlayerState(Player player) {
@@ -524,6 +511,51 @@ public class PlayerTimeManager {
         this.defaultLimitSeconds = seconds;
         plugin.getConfig().set("default-limit-minutes", seconds / 60L);
         plugin.saveConfig();
+    }
+
+    public PlayerTimeSnapshot getSnapshot(Player player) {
+        return getSnapshot(player.getUniqueId(), player.hasPermission("timeperday.bypass"));
+    }
+
+    public PlayerTimeSnapshot getSnapshot(UUID uuid, boolean bypassPermission) {
+        long played = getPlayedToday(uuid);
+        long limit = getLimit(uuid);
+        boolean whitelistedState = isWhitelisted(uuid);
+        boolean unlimited = whitelistedState || bypassPermission;
+        long remaining = unlimited ? limit : Math.max(0L, limit - played);
+        return new PlayerTimeSnapshot(
+                played,
+                limit,
+                remaining,
+                getSessionPoints(uuid),
+                getTotalLevel(uuid),
+                whitelistedState,
+                bypassPermission,
+                unlimited
+        );
+    }
+
+    public Component buildJoinInfoComponent(Player player, boolean kitGiven) {
+        PlayerTimeSnapshot snapshot = getSnapshot(player);
+        int kitLevel = getBestKitLevelFor(snapshot.totalLevel());
+        return buildConfiguredMessage(
+                plugin.getConfig().getString(
+                        "messages.join-info",
+                        "<green>Verbleibende Zeit: <yellow>{remaining}<green> | Level: <yellow>{level}"
+                                + "<green> | Session: <yellow>{session-points}<green> | Kit: <yellow>{kit-level}"),
+                Map.of(
+                        "{remaining}", snapshot.unlimited() ? "Unbegrenzt" : formatTime(snapshot.remaining()),
+                        "{level}", formatLevel(snapshot.totalLevel()),
+                        "{session-points}", formatLevel(snapshot.sessionPoints()),
+                        "{kit-level}", kitLevel > 0 ? String.valueOf(kitLevel) : "Keins",
+                        "{kit-given}", kitGiven ? "Ja" : "Nein"
+                )
+        );
+    }
+
+    public record PlayerTimeSnapshot(long played, long limit, long remaining, double sessionPoints,
+                                     double totalLevel, boolean whitelisted, boolean bypassPermission,
+                                     boolean unlimited) {
     }
 
     public static String formatLevel(double level) {
