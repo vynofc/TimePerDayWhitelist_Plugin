@@ -36,26 +36,25 @@ public class PlayerListener implements Listener {
         if (remaining <= 0) {
             // Limit bereits ausgeschöpft – mit 1 Tick Verzögerung rauswerfen
             // (PlayerJoinEvent muss erst abgeschlossen sein)
-            String line1 = plugin.getConfig().getString(
-                    "messages.kick-line1", "Deine tägliche Spielzeit ist aufgebraucht!")
-                    .replaceAll("<[^>]+>", "");
-            String line2 = plugin.getConfig().getString(
-                    "messages.kick-line2", "Du kannst morgen wieder spielen.")
-                    .replaceAll("<[^>]+>", "");
-
             player.getScheduler().runDelayed(plugin, task ->
-                    player.kick(Component.text()
-                            .append(Component.text(line1, NamedTextColor.RED))
-                            .appendNewline()
-                            .append(Component.text(line2, NamedTextColor.GRAY))
-                            .build()), null, 1L);
+                    player.kick(timeManager.buildJoinKickComponent(uuid)), null, 1L);
         } else if (plugin.getConfig().getBoolean("show-on-join", true)) {
+            boolean kitGiven = timeManager.grantDailyKit(player);
+            double level = timeManager.getTotalLevel(uuid);
+            double points = timeManager.getSessionPoints(uuid);
+            int kitLevel = timeManager.getBestKitLevelFor(level);
+
             // Verbleibende Zeit anzeigen
             String template = plugin.getConfig().getString(
                     "messages.join-info",
-                    "<green>Verbleibende Spielzeit heute: <yellow>{remaining}");
+                    "<green>Verbleibende Zeit: <yellow>{remaining}<green> | Level: <yellow>{level}"
+                            + "<green> | Session: <yellow>{session-points}<green> | Kit: <yellow>{kit-level}");
             String msg = template
                     .replace("{remaining}", PlayerTimeManager.formatTime(remaining))
+                    .replace("{level}", PlayerTimeManager.formatLevel(level))
+                    .replace("{session-points}", PlayerTimeManager.formatLevel(points))
+                    .replace("{kit-level}", kitLevel > 0 ? String.valueOf(kitLevel) : "Keins")
+                    .replace("{kit-given}", kitGiven ? "Ja" : "Nein")
                     .replaceAll("<[^>]+>", "");
 
             player.getScheduler().run(plugin, task ->

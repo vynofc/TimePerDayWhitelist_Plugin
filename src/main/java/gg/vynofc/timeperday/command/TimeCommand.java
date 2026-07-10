@@ -42,11 +42,15 @@ public class TimeCommand implements CommandExecutor {
         long played = timeManager.getPlayedToday(uuid);
         long limit = timeManager.getLimit(uuid);
         long remaining = Math.max(0L, limit - played);
+        double points = timeManager.getSessionPoints(uuid);
+        double level = timeManager.getTotalLevel(uuid);
 
         boolean unlimited = timeManager.isWhitelisted(uuid) || player.hasPermission("timeperday.bypass");
 
         player.sendMessage(Component.text("--- Deine Spielzeit heute ---", NamedTextColor.GOLD));
         player.sendMessage(info("Gespielt", PlayerTimeManager.formatTime(played)));
+        player.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(points)));
+        player.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(level)));
         if (unlimited) {
             player.sendMessage(info("Limit", "Unbegrenzt"));
             player.sendMessage(info("Verbleibend", "Unbegrenzt"));

@@ -2,6 +2,7 @@ package gg.vynofc.timeperday;
 
 import gg.vynofc.timeperday.command.TimeCommand;
 import gg.vynofc.timeperday.command.AdminTimeCommand;
+import gg.vynofc.timeperday.listener.PlayerItemListener;
 import gg.vynofc.timeperday.listener.PlayerListener;
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +21,7 @@ public class TimePerDayPlugin extends JavaPlugin {
         timeManager.load();
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerItemListener(timeManager), this);
 
         AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager);
         var adminCommand = getCommand("admintime");

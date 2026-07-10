@@ -16,10 +16,198 @@ warnings:
 
 # Nachrichten (unterstützt MiniMessage-Format)
 messages:
-  kick-line1: "<red>Deine tägliche Spielzeit ist aufgebraucht!"
+  kick-line1: "<red>Deine tägliche Spielzeit ist aufgebraucht! +{gained-level} Level (Gesamt: {total-level})"
   kick-line2: "<gray>Du kannst morgen wieder spielen."
   warning: "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"
-  join-info: "<green>Verbleibende Spielzeit heute: <yellow>{remaining}"
+  join-info: "<green>Verbleibende Zeit: <yellow>{remaining}<green> | Level: <yellow>{level}<green> | Session: <yellow>{session-points}<green> | Kit: <yellow>{kit-level}"
 
 # Ob beim Einloggen die verbleibende Zeit angezeigt wird
 show-on-join: true
+
+# ============================================================
+#  Progression (1 Stunde pro Tag)
+# ============================================================
+# Während der Tagesstunde sammelt man Session-Punkte über Items.
+# Beim Ablauf der Zeit werden Session-Punkte 1:1 in Gesamtlevel umgewandelt.
+progression:
+  points-per-item:
+    OAK_LOG: 0.025
+    BIRCH_LOG: 0.025
+    SPRUCE_LOG: 0.025
+    COBBLESTONE: 0.01
+    COAL: 0.03
+    IRON_INGOT: 0.08
+    GOLD_INGOT: 0.1
+    DIAMOND: 0.2
+    EMERALD: 0.2
+
+  # Kit-System: immer nur das höchste erreichte Kit wird vergeben.
+  # Pro Tag nur 1x Kit pro Spieler.
+  spawn-kits:
+    "10":
+      WOODEN_SWORD: 1
+      WOODEN_AXE: 1
+      WOODEN_PICKAXE: 1
+      WOODEN_SHOVEL: 1
+      WOODEN_HOE: 1
+      BREAD: 5
+    "20":
+      STONE_SWORD: 1
+      STONE_AXE: 1
+      STONE_PICKAXE: 1
+      STONE_SHOVEL: 1
+      STONE_HOE: 1
+      BREAD: 6
+    "30":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      BREAD: 8
+    "40":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      BREAD: 10
+    "50":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      BREAD: 12
+    "60":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 10
+    "70":
+      DIAMOND_PICKAXE: 1
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 12
+    "80":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      IRON_SWORD: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 14
+    "90":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      IRON_SWORD: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 16
+    "100":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 1
+      COOKED_BEEF: 16
+    "110":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 1
+      COOKED_BEEF: 18
+    "120":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      IRON_HELMET: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 2
+      COOKED_BEEF: 18
+    "130":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      DIAMOND_LEGGINGS: 1
+      IRON_HELMET: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 2
+      COOKED_BEEF: 20
+    "140":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      DIAMOND_LEGGINGS: 1
+      DIAMOND_CHESTPLATE: 1
+      IRON_HELMET: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 3
+      COOKED_BEEF: 20
+    "150":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      DIAMOND_LEGGINGS: 1
+      DIAMOND_CHESTPLATE: 1
+      DIAMOND_HELMET: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 4
+      ENCHANTED_GOLDEN_APPLE: 1
+      COOKED_BEEF: 24

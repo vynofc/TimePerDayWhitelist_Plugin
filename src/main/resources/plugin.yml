@@ -8,7 +8,7 @@ folia-supported: true
 
 commands:
   admintime:
-    description: Verwalte die täglichen Spielzeitlimits
+    description: Verwalte Zeit, Level und globale Resets
     usage: /admintime <subcommand>
     permission: timeperday.admin
     aliases: [ timeperday, tpd ]
