@@ -648,19 +648,7 @@ public class PlayerTimeManager {
             }
         }
 
-        double directLevel = plugin.getConfig().getDouble(modernPath, 0.0D);
-        if (directLevel > 0.0D) {
-            return directLevel;
-        }
-
-        String legacyPath = "progression.points-per-item." + material.name();
-        double legacyValue = plugin.getConfig().getDouble(legacyPath, 0.0D);
-        if (legacyValue > 0.0D) {
-            return legacyValue;
-        }
-
-        String legacySectionPath = modernPath + ".value";
-        return plugin.getConfig().getDouble(legacySectionPath, 0.0D);
+        return 0.0D;
     }
 
     public double getProgressLevel(UUID uuid) {

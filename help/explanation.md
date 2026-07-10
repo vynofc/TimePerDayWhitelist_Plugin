@@ -1,236 +1,139 @@
-# Explanation: Vollstaendige Aenderungen
+# Explanation: Aktueller Stand der Umsetzung
 
-Diese Datei erklaert im Detail, was implementiert wurde, warum es so gebaut wurde und wie die einzelnen Teile zusammenspielen.
+Diese Datei beschreibt den aktuellen Implementierungsstand des Plugins so genau wie moeglich. Sie ist bewusst auf das heutige Verhalten begrenzt und nennt keine Altformate mehr, die nicht mehr unterstuetzt werden.
 
-## Ziel der Umsetzung
+## Kurzueberblick
 
-Das Plugin wurde von reinem Tageszeit-Limit auf ein kombiniertes System erweitert:
+Das Plugin kombiniert weiterhin ein hartes Tageslimit mit einer einfachen Progressionslogik:
 
-1. Spieler haben weiterhin ein hartes Tageslimit (1h/Tag ueber Config).
-2. Innerhalb dieser Zeit sammeln Spieler Progression ueber Item-Pickups.
-3. Session-Punkte werden bei Zeitablauf in persistenten Gesamtlevel ueberfuehrt.
-4. Kits werden levelabhaengig vergeben (bis Level 150).
-5. Informationen zu Zeit, Session und Level werden in Commands/Nachrichten angezeigt.
+1. Spieler haben pro Tag ein konfigurierbares Zeitlimit.
+2. Item-Pickups waehrend der aktiven Spielzeit erzeugen Session-Punkte.
+3. Beim Ablauf der Zeit werden Session-Punkte in dauerhaftes Gesamtlevel umgewandelt.
+4. Erfolgreiche Progression-Pickups zeigen kurz eine Action-Bar.
+5. Level-basierte Kits werden einmal pro Tag vergeben.
 
-## Geaenderte Dateien (Ueberblick)
+## Aktuell unterstuetzte Daten und Pfade
 
-1. src/main/java/gg/vynofc/timeperday/manager/PlayerTimeManager.java
-2. src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java (neu)
-3. src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java
-4. src/main/java/gg/vynofc/timeperday/TimePerDayPlugin.java
-5. src/main/java/gg/vynofc/timeperday/command/TimeCommand.java
-6. src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java
-7. src/main/resources/config.yml
-8. README.md
-9. help/Anleitung.md
+### Persistente Spielerdaten
 
-## 1) PlayerTimeManager: Kernlogik erweitert
+Die Datei `playerdata.yml` speichert aktuell:
 
-In dieser Klasse wurden die wichtigsten neuen Systeme eingebaut.
+1. `playtime.<uuid>`
+2. `limits.<uuid>`
+3. `whitelist.<uuid>`
+4. `session-points.<uuid>`
+5. `total-level.<uuid>`
+6. `last-kit-claim-date.<uuid>`
 
-### Neue persistente Daten
+### Config-Struktur
 
-Zusatzlich zu playtime/limits/whitelist:
+Nur diese Progressionsform ist gueltig:
 
-1. session-points.<uuid>
-2. total-level.<uuid>
-3. last-kit-claim-date.<uuid>
+1. `progression.items.<ITEM>.level`
+2. `progression.spawn-kits.<LEVEL>`
 
-Diese Werte werden beim Laden gelesen und beim Speichern in playerdata.yml geschrieben.
+Andere Formate werden nicht mehr gelesen.
 
-### Tick-Logik bei Zeitablauf
+## 1) Progression und Item-Pickups
 
-Bei remaining <= 0 passiert jetzt:
+Die Progression laeuft ausschliesslich ueber Item-Pickups.
 
-1. Session abschliessen (sessionPoints -> totalLevel)
-2. Session-Punkte auf 0 setzen
-3. Danach Spieler kicken
+Ablauf:
 
-Damit bleibt die alte Zeitlogik erhalten, aber Progression wird korrekt verbucht.
+1. `PlayerItemListener` reagiert auf `EntityPickupItemEvent`.
+2. Das Material und die Menge werden an `PlayerTimeManager.addSessionPoints(...)` uebergeben.
+3. `readItemLevel(...)` liest den Wert nur aus `progression.items.<ITEM>.level`.
+4. Falls der Wert groesser als 0 ist, wird `sessionPoints` erhoeht.
+5. Der Spieler sieht kurz eine Action-Bar mit dem verdienten Wert.
 
-### Tageswechsel
+Wichtige Folge:
 
-Bei Datumswechsel:
+- Items, die nur im Inventar liegen und nicht ueber Pickup erfasst werden, erzeugen keine Progression.
+- Nicht konfigurierte Items erzeugen keine Punkte und keine Action-Bar.
+- Whitelist- und Bypass-Spieler erhalten keine Progression.
 
-1. playedToday wird zurueckgesetzt
-2. sessionPoints wird zurueckgesetzt
-3. totalLevel bleibt erhalten
+## 2) Zeitlimit und Abschluss der Session
 
-Das entspricht dem gewuenschten Verhalten: daily fresh run, aber dauerhafter Account-Fortschritt.
+Bei jedem Tick wird das Zeitlimit geprueft.
 
-### Kit-System
+Wenn die Restzeit 0 oder kleiner ist:
 
-Neue Logik:
+1. `finalizeSessionProgress(...)` uebernimmt alle Session-Punkte in `totalLevel`.
+2. `sessionPoints` wird auf 0 gesetzt.
+3. Der Spieler wird gekickt.
 
-1. readSpawnKits() liest progression.spawn-kits aus config.yml
-2. getBestKitLevelFor(level) ermittelt das hoechste erreichbare Kit
-3. grantDailyKit(player) vergibt Kit genau 1x pro Tag
-4. Ueberlauf-Items werden bei vollem Inventar gedroppt
+Die Kick-Nachricht zeigt dabei:
 
-### Placeholder fuer Nachrichten
+- gespielte Zeit
+- heutige Session-Punkte
+- Gesamtlevel
+- bestes erreichbares Kit
 
-Es wurde ein Platzhalter-System hinzugefuegt, damit Nachrichten Werte wie Level zeigen koennen:
+## 3) Join- und Profilanzeige
 
-1. gained-level
-2. total-level
-3. session-points
+Beim normalen Join und via `/time` werden die aktuellen Profilwerte angezeigt:
 
-## 2) Neuer Listener: PlayerItemListener
+- bisher gespielte Zeit
+- Session-Punkte
+- Gesamtlevel
+- Progress-Level
+- bestes Kit
+- verbleibende Zeit
 
-Datei: src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java
+Die Profilwerte kommen direkt aus den aktuellen Player-Daten und aus der Config, nicht aus alten Konvertierungswerten.
 
-Aufgabe:
+## 4) Kit-System
 
-1. Reagiert auf EntityPickupItemEvent
-2. Wenn Entity ein Player ist, werden Material + Menge an den Manager gegeben
-3. Dort werden Punkte laut progression.items.<ITEM>.level gerechnet
+Die Kit-Logik ist Level-basiert:
 
-Hinweis:
+1. `readSpawnKits()` liest `progression.spawn-kits`.
+2. `getBestKitLevelFor(...)` sucht die hoechste passende Stufe.
+3. `grantDailyKit(...)` vergibt das Kit nur einmal pro Tag.
+4. Falls das Inventar voll ist, werden Overflow-Items gedroppt.
 
-Aktuell Pickup-basiert = schnell und einfach, aber potentiell exploitable (Drop/Pickup-Farming).
+Das Stufenmodell laeuft aktuell in 10er-Schritten bis Level 150.
 
-## 3) PlayerListener: Join-Verhalten erweitert
+## 5) Admin-Funktionen
 
-Datei: src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java
+Die Admin-Funktionen decken Zeit und Fortschritt ab:
 
-### Bei bereits verbrauchter Tageszeit
+- Tageslimit setzen
+- Spieler-Level setzen und addieren
+- Spieler- und Global-Reset
+- Whitelist-Verwaltung
+- Reload
+- GUI-Verwaltung
 
-Der Join-Kick nutzt jetzt eine Profil-Uebersicht mit Zeit-, Session-, Level- und Kit-Infos.
+## Entfernte Altlogik
 
-### Bei normalem Join
+Die folgende Altlogik wurde entfernt und ist absichtlich nicht mehr Teil des Systems:
 
-Zusatzlogik:
+- Rueckfallpfade fuer alte Config-Formate
 
-1. Daily-Kit-Vergabe versuchen
-2. Join-Message mit:
-   - remaining
-   - total-level
-   - session-points
-   - kit-level
-   - /time-Hinweis
+Damit ist die Config klar und eindeutig: jedes Item bekommt genau einen Wert ueber `level`.
 
-## 4) Plugin Bootstrap erweitert
+## Auffaellige Risiken und moegliche Folgefehler
 
-Datei: src/main/java/gg/vynofc/timeperday/TimePerDayPlugin.java
+1. Das System ist weiterhin pickup-basiert. Wer Items nicht aufhebt, sammelt keine Punkte.
+2. Ein Stack-Pickup zaehlt als `Menge × level`, was gewollt ist, aber bei grossen Mengen schnell viel Progress erzeugen kann.
+3. Die Punktevergabe ist theoretisch durch Drop/Pickup-Farming manipulierbar, weil die Quelle nur der Pickup ist.
+4. Alte Config-Dateien ohne das aktuelle `level`-Schema liefern keine Punkte mehr.
 
-Neu:
+## Dateien im Kern
 
-1. Registrierung von PlayerItemListener
+- [src/main/java/gg/vynofc/timeperday/manager/PlayerTimeManager.java](../src/main/java/gg/vynofc/timeperday/manager/PlayerTimeManager.java)
+- [src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java](../src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java)
+- [src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java](../src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java)
+- [src/main/java/gg/vynofc/timeperday/command/TimeCommand.java](../src/main/java/gg/vynofc/timeperday/command/TimeCommand.java)
+- [src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java](../src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java)
+- [src/main/resources/config.yml](../src/main/resources/config.yml)
 
-Damit ist Item->Punkte aktiv.
+## Fazit
 
-## 5) TimeCommand erweitert
+Das Plugin ist jetzt auf ein klares, aktuelles Datenmodell reduziert:
 
-Datei: src/main/java/gg/vynofc/timeperday/command/TimeCommand.java
-
-Der Befehl /time zeigt jetzt zusaetzlich:
-
-1. Session-Punkte
-2. Gesamtlevel
-3. Progress-Level
-4. Bestes Kit
-
-Neben den bisherigen Zeitwerten.
-
-## 6) AdminTimeCommand erweitert
-
-Datei: src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java
-
-### Neue Subcommands
-
-1. /admintime setlevel <Spieler> <Level>
-2. /admintime addlevel <Spieler> <Level>
-3. /admintime reset (GLOBAL)
-4. /admintime resetplayer <Spieler>
-
-### Info-Ausgabe erweitert
-
-/admintime info zeigt jetzt zusaetzlich:
-
-1. Session-Punkte
-2. Gesamtlevel
-
-### TabComplete + Hilfe erweitert
-
-Neue Subcommands sind in Auto-Complete und Help-Text enthalten.
-
-### Global-Reset Verhalten
-
-`/admintime reset` fuehrt jetzt einen globalen Reset aus:
-
-1. alle Spielzeit-/Progressionsdaten werden geleert
-2. alle Spieler-Levels werden auf 0 gesetzt
-3. Online-Spieler werden auf Spawn gesetzt und Inventare/XP/Status werden resetet
-4. Welt-Laufzeitstatus wird resetet (Zeit/Wetter/Non-Player-Entities)
-
-Hinweis:
-
-Terrain/Chunk-Neugenerierung ist nicht Teil dieses Befehls. Der Befehl resetet den aktiven Laufzeit-Zustand und alle Plugin-Daten.
-
-## 7) config.yml stark erweitert
-
-Datei: src/main/resources/config.yml
-
-### Nachrichten
-
-Erweitert mit Platzhaltern fuer Progression und Profilansicht:
-
-1. Kick-Nachrichten bilden jetzt eine Profiluebersicht
-2. Join-Nachrichten enthalten remaining, total-level, session-points, kit-level und /time-Hinweis
-
-### progression.items
-
-Mehrere Startwerte fuer Material -> Level wurden hinzugefuegt.
-Jedes Item nutzt genau ein Feld: `level`.
-
-### progression.spawn-kits
-
-Komplette Staffel in 10er-Schritten bis 150 hinterlegt.
-
-Wichtige gewuenschte Anpassung umgesetzt:
-
-1. Kein fruehes Diamond bei Level 40
-2. Level 40 = Eisen-Tools + Iron Boots + Iron Leggings
-
-## 8) README aktualisiert
-
-Datei: README.md
-
-Das README beschreibt jetzt den echten Funktionsstand:
-
-1. 1h/Tag + Progression
-2. Item-Level pro Material
-3. Level-Kits bis 150
-4. Neue Admin-Level-Befehle
-5. Global-Reset mit `/admintime reset`
-
-## 9) help/Anleitung.md aktualisiert
-
-Datei: help/Anleitung.md
-
-Die Anleitung wurde von Plan-Text auf reale Implementierungsdokumentation umgestellt.
-
-## Offene technische Punkte
-
-1. Maven-Build laeuft erfolgreich durch.
-2. Pickup-basierte Punktevergabe ist weiterhin exploitable und sollte bei Bedarf anti-exploit gehaertet werden.
-
-## Empfohlener Testablauf
-
-1. Testserver starten
-2. Mit kleiner Tageszeit testen (z. B. 2-5 Minuten)
-3. Items sammeln und /time pruefen
-4. Zeit ablaufen lassen und Kick-Text pruefen
-5. Rejoin vor und nach Tageswechsel testen
-6. Kit-Vergabe je Level pruefen
-7. Server neu starten und Persistenz pruefen
-
-## Kurzfazit
-
-Die angeforderte Kernidee ist jetzt integriert:
-
-1. Tageslimit bleibt hart
-2. Progression laeuft innerhalb der Tageszeit
-3. Level bleiben dauerhaft
-4. Kit-System geht bis 150
-5. Doku und README sind auf den aktuellen Stand gebracht
+1. keine alten Progressionsschluessel mehr
+2. Progression nur ueber `progression.items.<ITEM>.level`
+3. Action-Bar bei erfolgreichen Progression-Pickups
+4. Session-Abschluss ueber das vorhandene Zeitlimit
+5. dauerhafte Gesamtlevel und tägliche Kits bleiben erhalten

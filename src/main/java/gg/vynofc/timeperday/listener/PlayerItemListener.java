@@ -1,6 +1,8 @@
 package gg.vynofc.timeperday.listener;
 
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,6 +24,10 @@ public class PlayerItemListener implements Listener {
         }
 
         var stack = event.getItem().getItemStack();
-        timeManager.addSessionPoints(player, stack.getType(), stack.getAmount());
+        double gained = timeManager.addSessionPoints(player, stack.getType(), stack.getAmount());
+        if (gained > 0.0D) {
+            player.sendActionBar(Component.text("+" + PlayerTimeManager.formatLevel(gained) + " Level",
+                    NamedTextColor.GREEN));
+        }
     }
 }
