@@ -4,7 +4,7 @@
 
 # Standard-Tageslimit in Minuten (gilt für alle Spieler ohne
 # individuelles Limit).
-default-limit-minutes: 120
+default-limit-minutes: 60
 
 # Warn-Nachrichten: bei wie vielen verbleibenden Sekunden
 # wird der Spieler gewarnt?  (Liste von Sekundenwerten)
