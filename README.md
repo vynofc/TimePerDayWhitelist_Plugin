@@ -7,11 +7,11 @@ Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 - 1 Stunde Spielzeit pro Tag (konfigurierbar)
 - Auto-Kick bei Tageslimit
 - Tagesreset über Datumswechsel
-- Item-basierte Session-Punkte (z. B. Log 0.025, Diamond 0.2)
+- Item-basierte Session-Punkte mit genau einem `level`-Wert pro Item
 - Session-Punkte werden beim Tageslimit in Gesamtlevel umgerechnet
 - Gesamtlevel wird persistent gespeichert
 - Level-basierte Spawn-Kits in 10er-Stufen bis Level 150
-- Join-/Kick-/Time-Anzeige mit Level-Informationen
+- Join-/Kick-/Time-Anzeige als Profiluebersicht inkl. `/time`-Hinweis
 - Admin-Funktionen für Zeit und Level
 - Ingame-Admin-Kisten-UI für Spielerverwaltung, Limits, Level, Whitelist, Reload und Global-Reset
 - Konfigurierte MiniMessage-Nachrichten werden tatsächlich als formatierte Components gerendert
@@ -33,12 +33,13 @@ mvn clean package
 
 ## Progressionslogik
 
-1. Spieler sammelt während der Tagesstunde Session-Punkte über Item-Pickups.
-2. Bei Zeitablauf wird der Spieler gekickt.
-3. Vor dem Kick gilt:
+1. Spieler sammelt waehrend der Tagesstunde Session-Punkte ueber konfigurierte Item-Pickups.
+2. Jedes konfigurierte Item hat genau einen `level`-Wert, der direkt als Progressionsgewinn zaehlt.
+3. Bei Zeitablauf wird der Spieler gekickt.
+4. Vor dem Kick gilt:
    - `gained-level = session-points`
    - `total-level += gained-level`
-4. Session-Punkte werden auf 0 gesetzt.
+5. Session-Punkte werden auf 0 gesetzt.
 
 ## Kit-Logik
 
@@ -75,7 +76,7 @@ Frühe Stufen:
 - `default-limit-minutes`
 - `warnings`
 - `messages.*`
-- `progression.points-per-item.*`
+- `progression.items.*.level`
 - `progression.spawn-kits.*`
 
 ## Admin-GUI

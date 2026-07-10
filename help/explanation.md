@@ -83,7 +83,7 @@ Aufgabe:
 
 1. Reagiert auf EntityPickupItemEvent
 2. Wenn Entity ein Player ist, werden Material + Menge an den Manager gegeben
-3. Dort werden Punkte laut progression.points-per-item gerechnet
+3. Dort werden Punkte laut progression.items.<ITEM>.level gerechnet
 
 Hinweis:
 
@@ -95,7 +95,7 @@ Datei: src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java
 
 ### Bei bereits verbrauchter Tageszeit
 
-Der Join-Kick nutzt jetzt die neue Manager-Komponente mit Level-Informationen.
+Der Join-Kick nutzt jetzt eine Profil-Uebersicht mit Zeit-, Session-, Level- und Kit-Infos.
 
 ### Bei normalem Join
 
@@ -104,9 +104,10 @@ Zusatzlogik:
 1. Daily-Kit-Vergabe versuchen
 2. Join-Message mit:
    - remaining
-   - level
+   - total-level
    - session-points
    - kit-level
+   - /time-Hinweis
 
 ## 4) Plugin Bootstrap erweitert
 
@@ -126,6 +127,8 @@ Der Befehl /time zeigt jetzt zusaetzlich:
 
 1. Session-Punkte
 2. Gesamtlevel
+3. Progress-Level
+4. Bestes Kit
 
 Neben den bisherigen Zeitwerten.
 
@@ -170,14 +173,15 @@ Datei: src/main/resources/config.yml
 
 ### Nachrichten
 
-Erweitert mit Platzhaltern fuer Progression:
+Erweitert mit Platzhaltern fuer Progression und Profilansicht:
 
-1. kick-line1 enthaelt gained-level und total-level
-2. join-info enthaelt remaining, level, session-points, kit-level
+1. Kick-Nachrichten bilden jetzt eine Profiluebersicht
+2. Join-Nachrichten enthalten remaining, total-level, session-points, kit-level und /time-Hinweis
 
-### progression.points-per-item
+### progression.items
 
-Mehrere Startwerte fuer Material -> Punkte wurden hinzugefuegt.
+Mehrere Startwerte fuer Material -> Level wurden hinzugefuegt.
+Jedes Item nutzt genau ein Feld: `level`.
 
 ### progression.spawn-kits
 
@@ -195,7 +199,7 @@ Datei: README.md
 Das README beschreibt jetzt den echten Funktionsstand:
 
 1. 1h/Tag + Progression
-2. Item-Werte
+2. Item-Level pro Material
 3. Level-Kits bis 150
 4. Neue Admin-Level-Befehle
 5. Global-Reset mit `/admintime reset`
@@ -208,9 +212,8 @@ Die Anleitung wurde von Plan-Text auf reale Implementierungsdokumentation umgest
 
 ## Offene technische Punkte
 
-1. Build in dieser Umgebung konnte nicht final per Maven laufen (mvn nicht im PATH).
-2. Editor-Diagnostik zeigt keine Java-Fehler in den geaenderten Dateien.
-3. Pickup-basierte Punktevergabe ist als MVP umgesetzt und sollte bei Bedarf anti-exploit gehaertet werden.
+1. Maven-Build laeuft erfolgreich durch.
+2. Pickup-basierte Punktevergabe ist weiterhin exploitable und sollte bei Bedarf anti-exploit gehaertet werden.
 
 ## Empfohlener Testablauf
 
@@ -230,4 +233,4 @@ Die angeforderte Kernidee ist jetzt integriert:
 2. Progression laeuft innerhalb der Tageszeit
 3. Level bleiben dauerhaft
 4. Kit-System geht bis 150
-5. Doku und README sind auf den neuen Stand gebracht
+5. Doku und README sind auf den aktuellen Stand gebracht

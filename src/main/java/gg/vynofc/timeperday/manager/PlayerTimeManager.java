@@ -196,19 +196,38 @@ public class PlayerTimeManager {
     }
 
     private Component buildKickComponent(UUID uuid, double gainedLevel, double totalLevelValue) {
-        String line1Template = plugin.getConfig().getString(
-                "messages.kick-line1",
-                "<red>Deine tägliche Spielzeit ist aufgebraucht! +{gained-level} Level (Gesamt: {total-level})");
-        Component line1 = buildConfiguredMessage(line1Template, Map.of(
-                "{gained-level}", formatLevel(gainedLevel),
-                "{total-level}", formatLevel(totalLevelValue),
-                "{session-points}", formatLevel(getSessionPoints(uuid))
-        ));
-        Component line2 = buildConfiguredMessage(
-                plugin.getConfig().getString("messages.kick-line2", "<gray>Du kannst morgen wieder spielen."),
-                Map.of());
-
-        return Component.text().append(line1).appendNewline().append(line2).build();
+        PlayerTimeSnapshot snapshot = getSnapshot(uuid, false);
+        int kitLevel = getBestKitLevelFor(totalLevelValue);
+        Map<String, String> placeholders = buildProfilePlaceholders(
+                uuid,
+                resolvePlayerName(uuid),
+                snapshot,
+                gainedLevel,
+                gainedLevel,
+                totalLevelValue,
+                kitLevel,
+                false
+        );
+        return buildMultilineMessage(List.of(
+                plugin.getConfig().getString(
+                        "messages.kick-title",
+                        "<gradient:#ff6b6b:#ffd166><bold>Spielzeit fuer heute verbraucht</bold></gradient>"),
+                plugin.getConfig().getString(
+                        "messages.kick-line1",
+                        "<gray>Profil von <yellow>{player}</yellow><gray> - gespielt: <yellow>{played}</yellow>"
+                                + " <dark_gray>| <gray>Limit: <yellow>{limit}</yellow>"),
+                plugin.getConfig().getString(
+                        "messages.kick-line2",
+                        "<gray>Heute verdient: <yellow>+{gained-level}</yellow> <dark_gray>| <gray>Session: "
+                                + "<yellow>{session-points}</yellow>"),
+                plugin.getConfig().getString(
+                        "messages.kick-line3",
+                        "<gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: "
+                                + "<yellow>{kit-level}</yellow>"),
+                plugin.getConfig().getString(
+                        "messages.kick-line4",
+                        "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/time</yellow><gray> fuer dein Profil.")
+        ), placeholders);
     }
 
     public Component buildJoinKickComponent(UUID uuid) {
@@ -233,8 +252,56 @@ public class PlayerTimeManager {
         return out;
     }
 
+    private Component buildMultilineMessage(List<String> templates, Map<String, String> placeholders) {
+        var builder = Component.text();
+        boolean firstLine = true;
+        for (String template : templates) {
+            if (template == null || template.isBlank()) {
+                continue;
+            }
+            if (!firstLine) {
+                builder.appendNewline();
+            }
+            builder.append(buildConfiguredMessage(template, placeholders));
+            firstLine = false;
+        }
+        return builder.build();
+    }
+
     private Component buildConfiguredMessage(String template, Map<String, String> placeholders) {
         return MINI_MESSAGE.deserialize(applyPlaceholders(template, placeholders));
+    }
+
+    private String resolvePlayerName(UUID uuid) {
+        Player online = Bukkit.getPlayer(uuid);
+        if (online != null) {
+            return online.getName();
+        }
+        String offlineName = Bukkit.getOfflinePlayer(uuid).getName();
+        return offlineName != null ? offlineName : uuid.toString();
+    }
+
+    private Map<String, String> buildProfilePlaceholders(UUID uuid, String playerName, PlayerTimeSnapshot snapshot,
+                                                         double gainedLevel, double sessionPointsValue,
+                                                         double totalLevelValue, int kitLevel, boolean kitGiven) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("{player}", playerName);
+        placeholders.put("{played}", formatTime(snapshot.played()));
+        placeholders.put("{limit}", snapshot.unlimited() ? "Unbegrenzt" : formatTime(snapshot.limit()));
+        placeholders.put("{remaining}", snapshot.unlimited() ? "Unbegrenzt" : formatTime(snapshot.remaining()));
+        placeholders.put("{gained-level}", formatLevel(gainedLevel));
+        placeholders.put("{session-points}", formatLevel(sessionPointsValue));
+        placeholders.put("{total-level}", formatLevel(totalLevelValue));
+        placeholders.put("{level}", formatLevel(totalLevelValue));
+        placeholders.put("{progress-level}", formatLevel(Math.max(totalLevelValue,
+                snapshot.totalLevel() + snapshot.sessionPoints())));
+        placeholders.put("{kit-level}", kitLevel > 0 ? String.valueOf(kitLevel) : "Keins");
+        placeholders.put("{kit-given}", kitGiven ? "Ja" : "Nein");
+        placeholders.put("{whitelisted}", snapshot.whitelisted() ? "Ja" : "Nein");
+        placeholders.put("{bypass}", snapshot.bypassPermission() ? "Ja" : "Nein");
+        placeholders.put("{status}", snapshot.unlimited() ? "Unbegrenzt" : "Begrenzt");
+        placeholders.put("{uuid}", uuid.toString());
+        return placeholders;
     }
 
     private void loadSection(String path, ConcurrentHashMap<UUID, Long> map) {
@@ -369,13 +436,12 @@ public class PlayerTimeManager {
             return 0.0D;
         }
 
-        String path = "progression.points-per-item." + material.name();
-        double perItem = plugin.getConfig().getDouble(path, 0.0D);
-        if (perItem <= 0.0D) {
+        double itemLevel = readItemLevel(material);
+        if (itemLevel <= 0.0D) {
             return 0.0D;
         }
 
-        double gain = perItem * amount;
+        double gain = itemLevel * amount;
         sessionPoints.merge(uuid, gain, Double::sum);
         return gain;
     }
@@ -538,24 +604,67 @@ public class PlayerTimeManager {
     public Component buildJoinInfoComponent(Player player, boolean kitGiven) {
         PlayerTimeSnapshot snapshot = getSnapshot(player);
         int kitLevel = getBestKitLevelFor(snapshot.totalLevel());
-        return buildConfiguredMessage(
+        Map<String, String> placeholders = buildProfilePlaceholders(
+                player.getUniqueId(),
+                player.getName(),
+                snapshot,
+                0.0D,
+                snapshot.sessionPoints(),
+                snapshot.totalLevel(),
+                kitLevel,
+                kitGiven
+        );
+        placeholders.put("{level}", formatLevel(snapshot.totalLevel()));
+
+        return buildMultilineMessage(List.of(
+                plugin.getConfig().getString(
+                        "messages.join-title",
+                        "<gradient:#7bed9f:#70a1ff><bold>Willkommen zurueck, {player}!</bold></gradient>"),
                 plugin.getConfig().getString(
                         "messages.join-info",
-                        "<green>Verbleibende Zeit: <yellow>{remaining}<green> | Level: <yellow>{level}"
-                                + "<green> | Session: <yellow>{session-points}<green> | Kit: <yellow>{kit-level}"),
-                Map.of(
-                        "{remaining}", snapshot.unlimited() ? "Unbegrenzt" : formatTime(snapshot.remaining()),
-                        "{level}", formatLevel(snapshot.totalLevel()),
-                        "{session-points}", formatLevel(snapshot.sessionPoints()),
-                        "{kit-level}", kitLevel > 0 ? String.valueOf(kitLevel) : "Keins",
-                        "{kit-given}", kitGiven ? "Ja" : "Nein"
-                )
-        );
+                        "<gray>Verbleibend: <yellow>{remaining}</yellow> <dark_gray>| <gray>Gesamtlevel: "
+                                + "<yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"),
+                plugin.getConfig().getString(
+                        "messages.join-line2",
+                        "<gray>Session heute: <yellow>{session-points}</yellow> <dark_gray>| <gray>Kit heute erhalten: "
+                                + "<yellow>{kit-given}</yellow>"),
+                plugin.getConfig().getString(
+                        "messages.join-tip",
+                        "<gray>Tipp: Nutze jederzeit <yellow>/time</yellow><gray> fuer deine komplette Profiluebersicht.")
+        ), placeholders);
     }
 
     public record PlayerTimeSnapshot(long played, long limit, long remaining, double sessionPoints,
                                      double totalLevel, boolean whitelisted, boolean bypassPermission,
                                      boolean unlimited) {
+    }
+
+    private double readItemLevel(Material material) {
+        String modernPath = "progression.items." + material.name();
+        if (plugin.getConfig().isConfigurationSection(modernPath)) {
+            double level = plugin.getConfig().getDouble(modernPath + ".level", 0.0D);
+            if (level > 0.0D) {
+                return level;
+            }
+        }
+
+        double directLevel = plugin.getConfig().getDouble(modernPath, 0.0D);
+        if (directLevel > 0.0D) {
+            return directLevel;
+        }
+
+        String legacyPath = "progression.points-per-item." + material.name();
+        double legacyValue = plugin.getConfig().getDouble(legacyPath, 0.0D);
+        if (legacyValue > 0.0D) {
+            return legacyValue;
+        }
+
+        String legacySectionPath = modernPath + ".value";
+        return plugin.getConfig().getDouble(legacySectionPath, 0.0D);
+    }
+
+    public double getProgressLevel(UUID uuid) {
+        return getTotalLevel(uuid) + getSessionPoints(uuid);
     }
 
     public static String formatLevel(double level) {

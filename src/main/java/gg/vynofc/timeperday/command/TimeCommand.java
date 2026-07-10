@@ -39,11 +39,14 @@ public class TimeCommand implements CommandExecutor {
         }
 
         var snapshot = timeManager.getSnapshot(player);
+        int bestKitLevel = timeManager.getBestKitLevelFor(snapshot.totalLevel());
 
-        player.sendMessage(Component.text("--- Deine Spielzeit heute ---", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("--- Dein Profil heute ---", NamedTextColor.GOLD));
         player.sendMessage(info("Gespielt", PlayerTimeManager.formatTime(snapshot.played())));
         player.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
         player.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
+        player.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(timeManager.getProgressLevel(player.getUniqueId()))));
+        player.sendMessage(info("Bestes Kit", bestKitLevel > 0 ? String.valueOf(bestKitLevel) : "Keins"));
         if (snapshot.unlimited()) {
             player.sendMessage(info("Limit", "Unbegrenzt"));
             player.sendMessage(info("Verbleibend", "Unbegrenzt"));

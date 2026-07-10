@@ -16,10 +16,16 @@ warnings:
 
 # Nachrichten (unterstützt MiniMessage-Format)
 messages:
-  kick-line1: "<red>Deine tägliche Spielzeit ist aufgebraucht! +{gained-level} Level (Gesamt: {total-level})"
-  kick-line2: "<gray>Du kannst morgen wieder spielen."
+  kick-title: "<gradient:#ff6b6b:#ffd166><bold>Spielzeit fuer heute verbraucht</bold></gradient>"
+  kick-line1: "<gray>Profil von <yellow>{player}</yellow><gray> - gespielt: <yellow>{played}</yellow> <dark_gray>| <gray>Limit: <yellow>{limit}</yellow>"
+  kick-line2: "<gray>Heute verdient: <yellow>+{gained-level}</yellow> <dark_gray>| <gray>Session: <yellow>{session-points}</yellow>"
+  kick-line3: "<gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
+  kick-line4: "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/time</yellow><gray> fuer dein Profil."
   warning: "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"
-  join-info: "<green>Verbleibende Zeit: <yellow>{remaining}<green> | Level: <yellow>{level}<green> | Session: <yellow>{session-points}<green> | Kit: <yellow>{kit-level}"
+  join-title: "<gradient:#7bed9f:#70a1ff><bold>Willkommen zurueck, {player}!</bold></gradient>"
+  join-info: "<gray>Verbleibend: <yellow>{remaining}</yellow> <dark_gray>| <gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
+  join-line2: "<gray>Session heute: <yellow>{session-points}</yellow> <dark_gray>| <gray>Kit heute erhalten: <yellow>{kit-given}</yellow>"
+  join-tip: "<gray>Tipp: Nutze jederzeit <yellow>/time</yellow><gray> fuer deine komplette Profiluebersicht."
 
 # Ob beim Einloggen die verbleibende Zeit angezeigt wird
 show-on-join: true
@@ -30,16 +36,31 @@ show-on-join: true
 # Während der Tagesstunde sammelt man Session-Punkte über Items.
 # Beim Ablauf der Zeit werden Session-Punkte 1:1 in Gesamtlevel umgewandelt.
 progression:
-  points-per-item:
-    OAK_LOG: 0.025
-    BIRCH_LOG: 0.025
-    SPRUCE_LOG: 0.025
-    COBBLESTONE: 0.01
-    COAL: 0.03
-    IRON_INGOT: 0.08
-    GOLD_INGOT: 0.1
-    DIAMOND: 0.2
-    EMERALD: 0.2
+  items:
+    COAL:
+      level: 0.03
+    REDSTONE:
+      level: 0.045
+    LAPIS_LAZULI:
+      level: 0.05
+    RAW_IRON:
+      level: 0.055
+    IRON_INGOT:
+      level: 0.08
+    COPPER_INGOT:
+      level: 0.06
+    GOLD_INGOT:
+      level: 0.1
+    QUARTZ:
+      level: 0.11
+    AMETHYST_SHARD:
+      level: 0.12
+    DIAMOND:
+      level: 0.2
+    EMERALD:
+      level: 0.22
+    NETHERITE_SCRAP:
+      level: 0.35
 
   # Kit-System: immer nur das höchste erreichte Kit wird vergeben.
   # Pro Tag nur 1x Kit pro Spieler.

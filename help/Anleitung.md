@@ -12,14 +12,15 @@ Diese Anleitung beschreibt das aktuell implementierte System im Plugin.
 
 ## Wie Progression funktioniert
 
-1. Item-Werte stehen in `progression.points-per-item` in `config.yml`.
-2. Beim Aufheben eines Items werden die Punkte aus Materialwert × Menge berechnet.
-3. Die Punkte werden als Session-Punkte gespeichert.
-4. Beim Tageslimit-Ende gilt: `gainedLevel = sessionPoints`, danach `totalLevel += gainedLevel`.
+1. Item-Werte stehen in `progression.items` in `config.yml`.
+2. Jedes Item hat genau einen `level`-Wert, der direkt als Gewinn pro Item zaehlt.
+3. Beim Aufheben eines Items werden die Punkte aus Materialwert × Menge berechnet.
+4. Die Punkte werden als Session-Punkte gespeichert.
+5. Beim Tageslimit-Ende gilt: `gainedLevel = sessionPoints`, danach `totalLevel += gainedLevel`.
 
 Beispiel:
 
-- 1x `OAK_LOG` = 0.025 Level
+- 1x `COAL` = 0.03 Level
 - 1x `DIAMOND` = 0.2 Level
 
 ## Kit-System (bis Level 150)
@@ -49,10 +50,13 @@ Verfügbare Platzhalter in `messages`:
 - `{kit-given}`
 - `{gained-level}`
 - `{total-level}`
+- `{player}`
+- `{played}`
+- `{limit}`
 
 ## Befehle
 
-- `/time` zeigt Zeit, Session-Punkte und Gesamtlevel.
+- `/time` zeigt Zeit, Session-Punkte, Gesamtlevel, Progress-Level und bestes Kit.
 - `/admintime info [Spieler]` zeigt zusätzlich Progressionswerte.
 - `/admintime setlevel <Spieler> <Level>` setzt Gesamtlevel.
 - `/admintime addlevel <Spieler> <Level>` addiert Gesamtlevel.
