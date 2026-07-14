@@ -19,9 +19,11 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +53,8 @@ public class PlayerTimeManager {
     private final ConcurrentHashMap<UUID, Double> totalLevel = new ConcurrentHashMap<>();
     // Verhindert Kit-Farming durch Rejoin: pro Tag nur ein Kit
     private final ConcurrentHashMap<UUID, String> lastKitClaimDate = new ConcurrentHashMap<>();
+    // Spieler, die beim nächsten Login ihr Inventar/Position zurückgesetzt bekommen sollen
+    private final Set<UUID> pendingDayOverReset = ConcurrentHashMap.newKeySet();
 
     private volatile long defaultLimitSeconds;
     private volatile String currentDate;
@@ -137,10 +141,10 @@ public class PlayerTimeManager {
         // Tageswechsel prüfen
         String today = LocalDate.now().format(DATE_FORMAT);
         if (!today.equals(currentDate)) {
-            currentDate = today;
-            playedToday.clear();
-            sessionPoints.clear();
-            plugin.getLogger().info("Tägliche Spielzeiten zurückgesetzt (Mitternacht).");
+            // Tageswechsel beendet die laufende Session sofort und setzt Spieler
+            // anschließend zurück; Warn-/Kick-Checks für den alten Tag entfallen damit.
+            triggerDayOver(today, "Tägliche Spielzeiten zurückgesetzt (Mitternacht).");
+            return;
         }
 
         List<Long> warningThresholds = plugin.getConfig().getLongList("warnings");
@@ -175,7 +179,7 @@ public class PlayerTimeManager {
         }
 
         if (remaining <= 0) {
-            double gained = finalizeSessionProgress(uuid);
+            double gained = finalizeSessionProgress(player);
             kickPlayer(player, gained, getTotalLevel(uuid));
         }
     }
@@ -234,14 +238,29 @@ public class PlayerTimeManager {
         return buildKickComponent(uuid, 0.0D, getTotalLevel(uuid));
     }
 
+    // Verwendet ausschließlich den gespeicherten Fallback-Wert. Online-Spieler
+    // werden im neuen System über finalizeSessionProgress(Player) finalisiert.
     private double finalizeSessionProgress(UUID uuid) {
-        double gained = sessionPoints.getOrDefault(uuid, 0.0D);
+        return finalizeSessionProgress(uuid, sessionPoints.getOrDefault(uuid, 0.0D));
+    }
+
+    private double finalizeSessionProgress(UUID uuid, double gained) {
         if (gained > 0.0D) {
             totalLevel.merge(uuid, gained, Double::sum);
         }
         sessionPoints.put(uuid, 0.0D);
         save();
         return gained;
+    }
+
+    private double finalizeSessionProgress(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
+            sessionPoints.remove(uuid);
+            return 0.0D;
+        }
+
+        return finalizeSessionProgress(uuid, calculateInventorySessionPoints(player));
     }
 
     private String applyPlaceholders(String text, Map<String, String> placeholders) {
@@ -409,6 +428,10 @@ public class PlayerTimeManager {
         return playedToday.getOrDefault(uuid, 0L);
     }
 
+    public double getSessionPoints(Player player) {
+        return calculateInventorySessionPoints(player);
+    }
+
     public double getSessionPoints(UUID uuid) {
         return sessionPoints.getOrDefault(uuid, 0.0D);
     }
@@ -426,24 +449,6 @@ public class PlayerTimeManager {
         if (amount <= 0.0D) return;
         totalLevel.merge(uuid, amount, Double::sum);
         save();
-    }
-
-    public double addSessionPoints(Player player, Material material, int amount) {
-        if (amount <= 0) return 0.0D;
-        UUID uuid = player.getUniqueId();
-
-        if (isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
-            return 0.0D;
-        }
-
-        double itemLevel = readItemLevel(material);
-        if (itemLevel <= 0.0D) {
-            return 0.0D;
-        }
-
-        double gain = itemLevel * amount;
-        sessionPoints.merge(uuid, gain, Double::sum);
-        return gain;
     }
 
     public int getBestKitLevelFor(double level) {
@@ -498,16 +503,29 @@ public class PlayerTimeManager {
     }
 
     public synchronized void debugTriggerDayOver() {
-        currentDate = LocalDate.now().format(DATE_FORMAT);
-        playedToday.clear();
-        sessionPoints.clear();
-        lastKitClaimDate.clear();
-        plugin.getLogger().info("Debug: Tag vorbei ausgelöst (Tageswerte zurückgesetzt).");
-        save();
+        triggerDayOver(LocalDate.now().format(DATE_FORMAT),
+                "Debug: Tag vorbei ausgelöst (Tageswerte zurückgesetzt).");
     }
 
     public void debugTriggerWarning(Player player, long remainingSeconds) {
         sendWarning(player, Math.max(0L, remainingSeconds));
+    }
+
+    /**
+     * Entfernt den Spieler aus der Pending-Reset-Liste und gibt zurück, ob ein Reset ansteht.
+     * Wird vom PlayerListener beim Login aufgerufen.
+     */
+    public boolean consumePendingDayOverReset(UUID uuid) {
+        return pendingDayOverReset.remove(uuid);
+    }
+
+    /**
+     * Öffentlicher Wrapper für resetOnlinePlayerState – wird beim Login nach einem
+     * debugTriggerDayOver() aufgerufen, damit Inventar und Position auch für Spieler
+     * zurückgesetzt werden, die zum Zeitpunkt des Debug-Events offline waren.
+     */
+    public void applyDayOverReset(Player player) {
+        resetOnlinePlayerState(player);
     }
 
     public boolean debugTriggerTimeout(Player player) {
@@ -517,7 +535,7 @@ public class PlayerTimeManager {
         }
 
         playedToday.put(uuid, getLimit(uuid));
-        double gained = finalizeSessionProgress(uuid);
+        double gained = finalizeSessionProgress(player);
         kickPlayer(player, gained, getTotalLevel(uuid));
         return true;
     }
@@ -550,7 +568,37 @@ public class PlayerTimeManager {
         });
     }
 
+    private double calculateInventorySessionPoints(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
+            return 0.0D;
+        }
+
+        return calculateItemPoints(player.getInventory().getStorageContents())
+                + calculateItemPoints(player.getInventory().getArmorContents())
+                + calculateItemPoints(new ItemStack[]{player.getInventory().getItemInOffHand()})
+                + calculateItemPoints(player.getEnderChest().getContents());
+    }
+
+    private double calculateItemPoints(ItemStack[] contents) {
+        double total = 0.0D;
+        for (ItemStack item : contents) {
+            if (item == null || item.getType() == Material.AIR) {
+                continue;
+            }
+
+            double lvl = readItemLevel(item.getType());
+            if (lvl > 0.0D) {
+                total += lvl * item.getAmount();
+            }
+        }
+        return total;
+    }
+
     private void resetOnlinePlayerState(Player player) {
+        // Inventar-Items vor dem Leeren vollständig in den Gesamtlevel übernehmen
+        finalizeSessionProgress(player);
+
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
         player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
@@ -609,7 +657,22 @@ public class PlayerTimeManager {
     }
 
     public PlayerTimeSnapshot getSnapshot(Player player) {
-        return getSnapshot(player.getUniqueId(), player.hasPermission("timeperday.bypass"));
+        long played = getPlayedToday(player.getUniqueId());
+        long limit = getLimit(player.getUniqueId());
+        boolean whitelistedState = isWhitelisted(player.getUniqueId());
+        boolean bypassPermission = player.hasPermission("timeperday.bypass");
+        boolean unlimited = whitelistedState || bypassPermission;
+        long remaining = unlimited ? limit : Math.max(0L, limit - played);
+        return new PlayerTimeSnapshot(
+                played,
+                limit,
+                remaining,
+                getSessionPoints(player),
+                getTotalLevel(player.getUniqueId()),
+                whitelistedState,
+                bypassPermission,
+                unlimited
+        );
     }
 
     public PlayerTimeSnapshot getSnapshot(UUID uuid, boolean bypassPermission) {
@@ -682,6 +745,47 @@ public class PlayerTimeManager {
 
     public double getProgressLevel(UUID uuid) {
         return getTotalLevel(uuid) + getSessionPoints(uuid);
+    }
+
+    public double getProgressLevel(Player player) {
+        return getTotalLevel(player.getUniqueId()) + getSessionPoints(player);
+    }
+
+    private void triggerDayOver(String newDate, String logMessage) {
+        Set<UUID> allTrackedUuids = new HashSet<>(playedToday.keySet());
+        allTrackedUuids.addAll(sessionPoints.keySet());
+        allTrackedUuids.addAll(lastKitClaimDate.keySet());
+        allTrackedUuids.addAll(totalLevel.keySet());
+        allTrackedUuids.addAll(playerLimits.keySet());
+
+        currentDate = newDate;
+        playedToday.clear();
+        lastKitClaimDate.clear();
+        plugin.getLogger().info(logMessage);
+        save();
+
+        plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
+            Set<UUID> currentlyOnline = new HashSet<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                UUID uuid = player.getUniqueId();
+                currentlyOnline.add(uuid);
+                if (!isWhitelisted(uuid) && !player.hasPermission("timeperday.bypass")) {
+                    player.getScheduler().run(plugin,
+                            scheduledTask -> resetOnlinePlayerState(player), null);
+                } else {
+                    sessionPoints.remove(uuid);
+                }
+            }
+            for (UUID uuid : allTrackedUuids) {
+                if (currentlyOnline.contains(uuid)) {
+                    continue;
+                }
+                sessionPoints.remove(uuid);
+                if (!isWhitelisted(uuid)) {
+                    pendingDayOverReset.add(uuid);
+                }
+            }
+        });
     }
 
     public static String formatLevel(double level) {

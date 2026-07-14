@@ -27,6 +27,21 @@ public class PlayerListener implements Listener {
             return;
         }
 
+        // Ausstehender Day-Over-Reset: Inventar leeren und zu Spawn teleportieren,
+        // danach Kit vergeben und Join-Nachricht anzeigen.
+        // 1-Tick-Verzögerung: PlayerJoinEvent muss erst abgeschlossen sein,
+        // bevor Inventar/Position geändert werden dürfen (gleiches Muster wie Kick).
+        if (timeManager.consumePendingDayOverReset(uuid)) {
+            player.getScheduler().runDelayed(plugin, task -> {
+                timeManager.applyDayOverReset(player);
+                boolean kitGiven = timeManager.grantDailyKit(player);
+                if (plugin.getConfig().getBoolean("show-on-join", true)) {
+                    player.sendMessage(timeManager.buildJoinInfoComponent(player, kitGiven));
+                }
+            }, null, 1L);
+            return;
+        }
+
         long limit = timeManager.getLimit(uuid);
         long played = timeManager.getPlayedToday(uuid);
         long remaining = limit - played;

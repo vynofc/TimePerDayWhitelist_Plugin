@@ -8,7 +8,7 @@ Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 - Auto-Kick bei Tageslimit
 - Tagesreset über Datumswechsel
 - Item-basierte Session-Punkte mit genau einem `level`-Wert pro Item
-- Session-Punkte werden beim Tageslimit in Gesamtlevel umgerechnet
+- Session-Punkte werden aus Inventar/Enderchest berechnet und erst beim Session-Ende in Gesamtlevel umgerechnet
 - Gesamtlevel wird persistent gespeichert
 - Level-basierte Spawn-Kits in 10er-Stufen bis Level 150
 - Join-/Kick-/Time-Anzeige als Profiluebersicht inkl. `/timeleft`-Hinweis
@@ -33,13 +33,15 @@ mvn clean package
 
 ## Progressionslogik
 
-1. Spieler sammelt waehrend der Tagesstunde Session-Punkte ueber konfigurierte Item-Pickups.
+1. Spieler sammelt waehrend der Tagesstunde konfigurierte Items im Inventar oder in der Enderchest.
 2. Jedes konfigurierte Item hat genau einen `level`-Wert, der direkt als Progressionsgewinn zaehlt.
-3. Bei Zeitablauf wird der Spieler gekickt.
-4. Vor dem Kick gilt:
+3. Session-Punkte in Anzeigen entsprechen dem aktuellen Inventarwert und werden nicht mehr beim Pickup gespeichert.
+4. Bei Zeitablauf oder Tagesreset wird vor dem Leeren/Finalisieren das komplette Inventar berechnet.
+5. Bei Zeitablauf wird der Spieler gekickt.
+6. Vor dem Kick gilt:
    - `gained-level = session-points`
    - `total-level += gained-level`
-5. Session-Punkte werden auf 0 gesetzt.
+7. Session-Punkte werden auf 0 gesetzt.
 
 ## Kit-Logik
 
@@ -88,8 +90,7 @@ Frühe Stufen:
 
 ## Hinweis
 
-Aktuell basiert die Punktevergabe auf Item-Pickup. Dadurch ist Drop/Pickup-Farming möglich.
-Wenn du das verhindern willst, erweitere die Vergabe später auf kontrollierte Quellen (z. B. BlockBreak/Craft/MobDrop).
+Die Punktevergabe basiert jetzt auf dem aktuellen Inventarstand vor Session-Ende oder Reset, nicht mehr auf Item-Pickups.
 
 ## Lizenz
 

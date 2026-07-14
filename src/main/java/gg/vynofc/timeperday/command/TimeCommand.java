@@ -45,7 +45,7 @@ public class TimeCommand implements CommandExecutor {
         player.sendMessage(info("Gespielt", PlayerTimeManager.formatTime(snapshot.played())));
         player.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
         player.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
-        player.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(timeManager.getProgressLevel(player.getUniqueId()))));
+        player.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(timeManager.getProgressLevel(player))));
         player.sendMessage(info("Bestes Kit", bestKitLevel > 0 ? String.valueOf(bestKitLevel) : "Keins"));
         if (snapshot.unlimited()) {
             player.sendMessage(info("Limit", "Unbegrenzt"));
