@@ -570,36 +570,24 @@ public class PlayerTimeManager {
             return 0.0D;
         }
 
-        double total = 0.0D;
-        for (ItemStack item : player.getInventory().getStorageContents()) {
-            if (item == null || item.getType() == Material.AIR) continue;
-            double lvl = readItemLevel(item.getType());
-            if (lvl > 0.0D) {
-                total += lvl * item.getAmount();
-            }
-        }
-        for (ItemStack item : player.getInventory().getArmorContents()) {
-            if (item == null || item.getType() == Material.AIR) continue;
-            double lvl = readItemLevel(item.getType());
-            if (lvl > 0.0D) {
-                total += lvl * item.getAmount();
-            }
-        }
-        ItemStack offhand = player.getInventory().getItemInOffHand();
-        if (offhand != null && offhand.getType() != Material.AIR) {
-            double lvl = readItemLevel(offhand.getType());
-            if (lvl > 0.0D) {
-                total += lvl * offhand.getAmount();
-            }
-        }
-        for (ItemStack item : player.getEnderChest().getContents()) {
-            if (item == null || item.getType() == Material.AIR) continue;
-            double lvl = readItemLevel(item.getType());
-            if (lvl > 0.0D) {
-                total += lvl * item.getAmount();
-            }
-        }
+        return calculateItemPoints(player.getInventory().getStorageContents())
+                + calculateItemPoints(player.getInventory().getArmorContents())
+                + calculateItemPoints(new ItemStack[]{player.getInventory().getItemInOffHand()})
+                + calculateItemPoints(player.getEnderChest().getContents());
+    }
 
+    private double calculateItemPoints(ItemStack[] contents) {
+        double total = 0.0D;
+        for (ItemStack item : contents) {
+            if (item == null || item.getType() == Material.AIR) {
+                continue;
+            }
+
+            double lvl = readItemLevel(item.getType());
+            if (lvl > 0.0D) {
+                total += lvl * item.getAmount();
+            }
+        }
         return total;
     }
 
@@ -760,8 +748,7 @@ public class PlayerTimeManager {
     }
 
     private void triggerDayOver(String newDate, String logMessage) {
-        Set<UUID> allTrackedUuids = new HashSet<>();
-        allTrackedUuids.addAll(playedToday.keySet());
+        Set<UUID> allTrackedUuids = new HashSet<>(playedToday.keySet());
         allTrackedUuids.addAll(sessionPoints.keySet());
         allTrackedUuids.addAll(lastKitClaimDate.keySet());
         allTrackedUuids.addAll(totalLevel.keySet());
