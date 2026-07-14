@@ -366,6 +366,10 @@ public class AdminMenuService {
                 : PlayerTimeManager.formatTime(snapshot.remaining())));
         admin.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
         admin.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
+        admin.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(
+                target.getPlayer() != null
+                        ? timeManager.getProgressLevel(target.getPlayer())
+                        : timeManager.getProgressLevel(target.getUniqueId()))));
         admin.sendMessage(info("Whitelist (unbegrenzt)", snapshot.whitelisted() ? "Ja" : "Nein"));
     }
 
@@ -380,6 +384,9 @@ public class AdminMenuService {
                         : PlayerTimeManager.formatTime(snapshot.remaining())),
                 "Session: " + PlayerTimeManager.formatLevel(snapshot.sessionPoints()),
                 "Gesamtlevel: " + PlayerTimeManager.formatLevel(snapshot.totalLevel()),
+                "Progress-Level: " + PlayerTimeManager.formatLevel(target.getPlayer() != null
+                        ? timeManager.getProgressLevel(target.getPlayer())
+                        : timeManager.getProgressLevel(target.getUniqueId())),
                 "Bestes Kit: " + (bestKitLevel > 0 ? bestKitLevel : "Keins"),
                 "Whitelist: " + (snapshot.whitelisted() ? "Ja" : "Nein")
         );
