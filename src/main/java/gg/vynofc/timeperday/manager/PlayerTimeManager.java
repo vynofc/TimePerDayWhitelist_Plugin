@@ -141,6 +141,8 @@ public class PlayerTimeManager {
         // Tageswechsel prüfen
         String today = LocalDate.now().format(DATE_FORMAT);
         if (!today.equals(currentDate)) {
+            // Tageswechsel beendet die laufende Session sofort und setzt Spieler
+            // anschließend zurück; Warn-/Kick-Checks für den alten Tag entfallen damit.
             triggerDayOver(today, "Tägliche Spielzeiten zurückgesetzt (Mitternacht).");
             return;
         }
@@ -236,6 +238,8 @@ public class PlayerTimeManager {
         return buildKickComponent(uuid, 0.0D, getTotalLevel(uuid));
     }
 
+    // Verwendet ausschließlich den gespeicherten Fallback-Wert. Online-Spieler
+    // werden im neuen System über finalizeSessionProgress(Player) finalisiert.
     private double finalizeSessionProgress(UUID uuid) {
         return finalizeSessionProgress(uuid, sessionPoints.getOrDefault(uuid, 0.0D));
     }
