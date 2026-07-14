@@ -763,6 +763,10 @@ public class PlayerTimeManager {
         allTrackedUuids.addAll(lastKitClaimDate.keySet());
         allTrackedUuids.addAll(totalLevel.keySet());
         allTrackedUuids.addAll(playerLimits.keySet());
+        Set<UUID> onlineAtTrigger = new HashSet<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            onlineAtTrigger.add(player.getUniqueId());
+        }
 
         currentDate = newDate;
         playedToday.clear();
@@ -770,11 +774,22 @@ public class PlayerTimeManager {
         plugin.getLogger().info(logMessage);
         save();
 
+        for (UUID uuid : allTrackedUuids) {
+            if (onlineAtTrigger.contains(uuid)) {
+                continue;
+            }
+            sessionPoints.remove(uuid);
+            if (!isWhitelisted(uuid)) {
+                pendingDayOverReset.add(uuid);
+            }
+        }
+
         plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
-            Set<UUID> currentlyOnline = new HashSet<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 UUID uuid = player.getUniqueId();
-                currentlyOnline.add(uuid);
+                if (!onlineAtTrigger.contains(uuid)) {
+                    continue;
+                }
                 if (!isWhitelisted(uuid) && !player.hasPermission("timeperday.bypass")) {
                     player.getScheduler().run(plugin, scheduledTask -> {
                         resetOnlinePlayerState(player);
@@ -782,15 +797,6 @@ public class PlayerTimeManager {
                     }, null);
                 } else {
                     sessionPoints.remove(uuid);
-                }
-            }
-            for (UUID uuid : allTrackedUuids) {
-                if (currentlyOnline.contains(uuid)) {
-                    continue;
-                }
-                sessionPoints.remove(uuid);
-                if (!isWhitelisted(uuid)) {
-                    pendingDayOverReset.add(uuid);
                 }
             }
         });
