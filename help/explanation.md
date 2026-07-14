@@ -7,8 +7,8 @@ Diese Datei beschreibt den aktuellen Implementierungsstand des Plugins so genau 
 Das Plugin kombiniert weiterhin ein hartes Tageslimit mit einer einfachen Progressionslogik:
 
 1. Spieler haben pro Tag ein konfigurierbares Zeitlimit.
-2. Item-Pickups waehrend der aktiven Spielzeit erzeugen Session-Punkte.
-3. Beim Ablauf der Zeit werden Session-Punkte in dauerhaftes Gesamtlevel umgewandelt.
+2. Items im Inventar und in der Enderchest bestimmen die Session-Punkte.
+3. Beim Ablauf der Zeit oder vor einem Tagesreset werden diese Punkte in dauerhaftes Gesamtlevel umgewandelt.
 4. Level-basierte Kits werden einmal pro Tag vergeben.
 
 ## Aktuell unterstuetzte Daten und Pfade
@@ -33,19 +33,19 @@ Nur diese Progressionsform ist gueltig:
 
 Andere Formate werden nicht mehr gelesen.
 
-## 1) Progression und Item-Pickups
+## 1) Progression und Inventarwertung
 
-Die Progression laeuft ausschliesslich ueber Item-Pickups.
+Die Progression laeuft ueber den aktuellen Inventarstand des Spielers.
 
 Ablauf:
 
-1. `PlayerItemListener` reagiert auf `EntityPickupItemEvent`.
-2. Das Material und die Menge werden an `PlayerTimeManager.addSessionPoints(...)` uebergeben.
-3. `readItemLevel(...)` liest den Wert nur aus `progression.items.<ITEM>.level`.
-4. Falls der Wert groesser als 0 ist, wird `sessionPoints` erhoeht.
+1. `calculateInventorySessionPoints(...)` liest Storage, Ruestung, Offhand und Enderchest.
+2. `readItemLevel(...)` liest den Wert nur aus `progression.items.<ITEM>.level`.
+3. Fuer jedes konfigurierte Item zaehlt `Menge × level`.
+4. Anzeigen wie `/timeleft` nutzen diesen aktuellen Inventarwert direkt.
 Wichtige Folge:
 
-- Items, die nur im Inventar liegen und nicht ueber Pickup erfasst werden, erzeugen keine Progression.
+- Alle passenden Items im Inventar zaehlen, auch ohne vorherigen Pickup-Event.
 - Nicht konfigurierte Items erzeugen keine Punkte.
 - Whitelist- und Bypass-Spieler erhalten keine Progression.
 
@@ -55,9 +55,10 @@ Bei jedem Tick wird das Zeitlimit geprueft.
 
 Wenn die Restzeit 0 oder kleiner ist:
 
-1. `finalizeSessionProgress(...)` uebernimmt alle Session-Punkte in `totalLevel`.
-2. `sessionPoints` wird auf 0 gesetzt.
-3. Der Spieler wird gekickt.
+1. `finalizeSessionProgress(Player)` berechnet zuerst das aktuelle Inventar.
+2. `finalizeSessionProgress(...)` uebernimmt diese Session-Punkte in `totalLevel`.
+3. `sessionPoints` wird auf 0 gesetzt.
+4. Der Spieler wird gekickt.
 
 Die Kick-Nachricht zeigt dabei:
 
@@ -111,15 +112,13 @@ Damit ist die Config klar und eindeutig: jedes Item bekommt genau einen Wert ueb
 
 ## Auffaellige Risiken und moegliche Folgefehler
 
-1. Das System ist weiterhin pickup-basiert. Wer Items nicht aufhebt, sammelt keine Punkte.
-2. Ein Stack-Pickup zaehlt als `Menge × level`, was gewollt ist, aber bei grossen Mengen schnell viel Progress erzeugen kann.
-3. Die Punktevergabe ist theoretisch durch Drop/Pickup-Farming manipulierbar, weil die Quelle nur der Pickup ist.
-4. Alte Config-Dateien ohne das aktuelle `level`-Schema liefern keine Punkte mehr.
+1. Ein grosser Inventarbestand zaehlt beim Session-Ende komplett als `Menge × level`.
+2. Nicht konfigurierte Items erzeugen weiterhin keine Punkte.
+3. Alte Config-Dateien ohne das aktuelle `level`-Schema liefern keine Punkte mehr.
 
 ## Dateien im Kern
 
 - [src/main/java/gg/vynofc/timeperday/manager/PlayerTimeManager.java](../src/main/java/gg/vynofc/timeperday/manager/PlayerTimeManager.java)
-- [src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java](../src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java)
 - [src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java](../src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java)
 - [src/main/java/gg/vynofc/timeperday/command/TimeCommand.java](../src/main/java/gg/vynofc/timeperday/command/TimeCommand.java)
 - [src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java](../src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java)

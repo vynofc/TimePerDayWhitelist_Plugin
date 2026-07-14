@@ -6,7 +6,7 @@ Diese Anleitung beschreibt das aktuell implementierte System im Plugin.
 
 1. Jeder Spieler hat pro Tag genau 1 Stunde Spielzeit (konfigurierbar über `default-limit-minutes`).
 2. Nach Ablauf wird der Spieler gekickt.
-3. Alle in der Session gesammelten Item-Punkte werden beim Ablauf in Gesamtlevel umgewandelt.
+3. Alle Item-Punkte aus Inventar und Enderchest werden beim Ablauf oder Reset in Gesamtlevel umgewandelt.
 4. Session-Punkte werden zurückgesetzt, Gesamtlevel bleibt dauerhaft erhalten.
 5. Join-Kit wird täglich einmal vergeben, abhängig vom höchsten erreichten Level-Kit.
 
@@ -14,8 +14,8 @@ Diese Anleitung beschreibt das aktuell implementierte System im Plugin.
 
 1. Item-Werte stehen in `progression.items` in `config.yml`.
 2. Jedes Item hat genau einen `level`-Wert, der direkt als Gewinn pro Item zaehlt.
-3. Beim Aufheben eines Items werden die Punkte aus Materialwert × Menge berechnet.
-4. Die Punkte werden als Session-Punkte gespeichert.
+3. Die Session-Punkte ergeben sich aus allen konfigurierten Items im Inventar, in der Rüstung, in der Offhand und in der Enderchest.
+4. Vor dem Leeren oder Finalisieren wird `Materialwert × Menge` über alle passenden Items berechnet.
 5. Beim Tageslimit-Ende gilt: `gainedLevel = sessionPoints`, danach `totalLevel += gainedLevel`.
 
 Beispiel:
@@ -64,7 +64,6 @@ Verfügbare Platzhalter in `messages`:
 ## Technische Dateien
 
 - `src/main/java/gg/vynofc/timeperday/manager/PlayerTimeManager.java`
-- `src/main/java/gg/vynofc/timeperday/listener/PlayerItemListener.java`
 - `src/main/java/gg/vynofc/timeperday/listener/PlayerListener.java`
 - `src/main/java/gg/vynofc/timeperday/command/TimeCommand.java`
 - `src/main/java/gg/vynofc/timeperday/command/AdminTimeCommand.java`
@@ -72,5 +71,4 @@ Verfügbare Platzhalter in `messages`:
 
 ## Hinweis zu Exploits
 
-Aktuell zählt das System Item-Punkte über Item-Pickup. Dadurch ist Drop/Pickup-Farming theoretisch möglich.
-Für eine spätere Hardening-Version sollte die Vergabe über kontrollierte Quellen erfolgen (z. B. BlockBreak, Craft, MobDrop).
+Aktuell zählt das System Item-Punkte über den Inventarstand am Session-Ende oder Reset.

@@ -5,7 +5,6 @@ import gg.vynofc.timeperday.command.AdminTimeCommand;
 import gg.vynofc.timeperday.command.DebugTimeCommand;
 import gg.vynofc.timeperday.gui.AdminMenuListener;
 import gg.vynofc.timeperday.gui.AdminMenuService;
-import gg.vynofc.timeperday.listener.PlayerItemListener;
 import gg.vynofc.timeperday.listener.PlayerListener;
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -24,7 +23,6 @@ public class TimePerDayPlugin extends JavaPlugin {
         adminMenuService = new AdminMenuService(this, timeManager);
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager), this);
-        getServer().getPluginManager().registerEvents(new PlayerItemListener(timeManager), this);
         getServer().getPluginManager().registerEvents(new AdminMenuListener(adminMenuService), this);
 
         AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager, adminMenuService);
