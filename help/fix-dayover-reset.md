@@ -11,7 +11,7 @@ Wenn man `/debugtime dayover` ausführte, hat die Console zwar gemeldet:
 Debug-Event ausgelöst: Tag vorbei (Spielzeiten/Session reset).
 ```
 
-Aber beim anschließenden Reonloggen hatte der Spieler noch:
+Aber beim anschließenden Reloggen hatte der Spieler noch:
 - das alte Inventar
 - die alte Position
 
