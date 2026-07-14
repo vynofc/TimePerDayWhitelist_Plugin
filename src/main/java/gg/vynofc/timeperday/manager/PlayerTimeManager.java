@@ -776,8 +776,10 @@ public class PlayerTimeManager {
                 UUID uuid = player.getUniqueId();
                 currentlyOnline.add(uuid);
                 if (!isWhitelisted(uuid) && !player.hasPermission("timeperday.bypass")) {
-                    player.getScheduler().run(plugin,
-                            scheduledTask -> resetOnlinePlayerState(player), null);
+                    player.getScheduler().run(plugin, scheduledTask -> {
+                        resetOnlinePlayerState(player);
+                        grantDailyKit(player);
+                    }, null);
                 } else {
                     sessionPoints.remove(uuid);
                 }
