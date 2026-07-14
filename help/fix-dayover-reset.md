@@ -84,45 +84,38 @@ public synchronized void debugTriggerDayOver() {
 
 **Neu (aktuell):**
 ```java
-public synchronized void debugTriggerDayOver() {
-    // Alle bekannten UUIDs vor dem Leeren sammeln (auch Offline-Spieler)
-    Set<UUID> allTrackedUuids = new HashSet<>();
-    allTrackedUuids.addAll(playedToday.keySet());
+private void triggerDayOver(String newDate, String logMessage) {
+    Set<UUID> allTrackedUuids = new HashSet<>(playedToday.keySet());
     allTrackedUuids.addAll(sessionPoints.keySet());
     allTrackedUuids.addAll(lastKitClaimDate.keySet());
     allTrackedUuids.addAll(totalLevel.keySet());
     allTrackedUuids.addAll(playerLimits.keySet());
 
-    currentDate = LocalDate.now().format(DATE_FORMAT);
+    currentDate = newDate;
     playedToday.clear();
-    // sessionPoints wird NICHT hier geleert – Online-Spieler werden via
-    // resetOnlinePlayerState (Inventar zählen + finalisieren) behandelt;
-    // Offline-Spieler weiter unten im Scheduler finalisiert.
     lastKitClaimDate.clear();
+    plugin.getLogger().info(logMessage);
     save();
 
     plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
         Set<UUID> currentlyOnline = new HashSet<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            currentlyOnline.add(player.getUniqueId());
-            if (!isWhitelisted(player.getUniqueId()) && !player.hasPermission("timeperday.bypass")) {
-                // resetOnlinePlayerState zählt Inventar und finalisiert Session-Punkte
+            UUID uuid = player.getUniqueId();
+            currentlyOnline.add(uuid);
+            if (!isWhitelisted(uuid) && !player.hasPermission("timeperday.bypass")) {
                 player.getScheduler().run(plugin,
                         scheduledTask -> resetOnlinePlayerState(player), null);
             } else {
-                // Whitelisted/Bypass: Session-Punkte einfach verwerfen
-                sessionPoints.remove(player.getUniqueId());
+                sessionPoints.remove(uuid);
             }
         }
         for (UUID uuid : allTrackedUuids) {
-            if (!currentlyOnline.contains(uuid)) {
-                if (!isWhitelisted(uuid)) {
-                    // Offline-Spieler: Session-Punkte ohne Inventar finalisieren
-                    finalizeSessionProgress(uuid);
-                    pendingDayOverReset.add(uuid);
-                } else {
-                    sessionPoints.remove(uuid);
-                }
+            if (currentlyOnline.contains(uuid)) {
+                continue;
+            }
+            sessionPoints.remove(uuid);
+            if (!isWhitelisted(uuid)) {
+                pendingDayOverReset.add(uuid);
             }
         }
     });
@@ -135,23 +128,24 @@ public synchronized void debugTriggerDayOver() {
    *bevor* die Maps geleert werden. Das ist wichtig – danach wäre die Information weg.
 
 2. **Maps leeren + speichern:** `playedToday` und `lastKitClaimDate` werden geleert.
-   `sessionPoints` wird bewusst *nicht* hier geleert – die Finalisierung erfolgt
-   per Spieler im Scheduler-Block darunter.
+   `sessionPoints` werden nicht global auf einmal gecleart, sondern anschließend
+   im Scheduler pro Spieler entfernt.
 
 3. **GlobalRegionScheduler:** Spieler-Aktionen (Inventar, Teleport) müssen im richtigen
    Bukkit/Folia-Thread laufen. `getGlobalRegionScheduler().run(...)` stellt das sicher.
 
 4. **Online-Spieler sofort zurücksetzen:** Für jeden gerade eingeloggten Spieler (ohne
    Whitelist/Bypass) wird `resetOnlinePlayerState(player)` über den Spieler-eigenen
-   Scheduler aufgerufen. Diese Methode zählt zuerst alle Inventar-Items (via
-   `addInventoryToSessionPoints`), überträgt die Session-Punkte in den Gesamtlevel
-   (`finalizeSessionProgress`) und leert dann Inventar, XP, Health, Position.
+   Scheduler aufgerufen. Diese Methode berechnet zuerst den aktuellen Inventarwert,
+   überträgt ihn via `finalizeSessionProgress` in den Gesamtlevel und leert dann
+   Inventar, Enderchest, XP, Health, Food und Position.
 
-5. **Offline-Spieler finalisieren + in `pendingDayOverReset` eintragen:** Für alle
-   bekannten UUIDs, die *nicht* gerade online sind, werden die Session-Punkte via
-   `finalizeSessionProgress` in den Gesamtlevel übertragen (ohne Inventar, da kein
-   Zugriff möglich). Danach werden sie ins Pending-Reset-Set eingetragen.
-   Beim nächsten Login übernimmt `PlayerListener` den Rest.
+5. **Offline-Spieler vormerken:** Für alle bekannten UUIDs, die *nicht* gerade online
+   sind, werden vorhandene `sessionPoints` entfernt und nicht direkt finalisiert.
+   Nicht-whitelisted Spieler werden stattdessen in `pendingDayOverReset` eingetragen.
+   Beim nächsten Login übernimmt `PlayerListener` den verzögerten Reset; erst dort
+   wird der dann verfügbare Inventarstand noch einmal finalisiert und anschließend
+   geleert.
 
 ---
 
@@ -248,6 +242,7 @@ Spieler loggt sich ein:
   → onPlayerJoin: consumePendingDayOverReset(uuid) → true
   → 1 Tick Delay
   → applyDayOverReset(player):
+     → Inventarwert finalisieren
      → Inventar geleert
      → Zu Spawn teleportiert
   → grantDailyKit(player) → Kit vergeben
