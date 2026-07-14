@@ -357,9 +357,7 @@ public class AdminMenuService {
 
     private void sendPlayerInfo(Player admin, OfflinePlayer target) {
         PlayerTimeSnapshot snapshot = snapshot(target);
-        double progressLevel = target.getPlayer() != null
-                ? timeManager.getProgressLevel(target.getPlayer())
-                : timeManager.getProgressLevel(target.getUniqueId());
+        double progressLevel = timeManager.getProgressLevel(target);
         admin.sendMessage(Component.text(
                 "--- Spielzeitinfo: " + displayName(target) + " ---", NamedTextColor.GOLD));
         admin.sendMessage(info("Gespielt heute", PlayerTimeManager.formatTime(snapshot.played())));
@@ -376,9 +374,7 @@ public class AdminMenuService {
     private ItemStack buildPlayerSummaryItem(OfflinePlayer target) {
         PlayerTimeSnapshot snapshot = snapshot(target);
         int bestKitLevel = timeManager.getBestKitLevelFor(snapshot.totalLevel());
-        double progressLevel = target.getPlayer() != null
-                ? timeManager.getProgressLevel(target.getPlayer())
-                : timeManager.getProgressLevel(target.getUniqueId());
+        double progressLevel = timeManager.getProgressLevel(target);
         return playerHead(target,
                 displayName(target),
                 "Gespielt: " + PlayerTimeManager.formatTime(snapshot.played()),

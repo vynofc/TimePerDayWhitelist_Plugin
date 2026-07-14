@@ -6,6 +6,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.GameMode;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -749,6 +750,11 @@ public class PlayerTimeManager {
 
     public double getProgressLevel(Player player) {
         return getTotalLevel(player.getUniqueId()) + getSessionPoints(player);
+    }
+
+    public double getProgressLevel(OfflinePlayer player) {
+        Player onlinePlayer = player.getPlayer();
+        return onlinePlayer != null ? getProgressLevel(onlinePlayer) : getProgressLevel(player.getUniqueId());
     }
 
     private void triggerDayOver(String newDate, String logMessage) {

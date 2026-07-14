@@ -113,9 +113,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         var snapshot = target.getPlayer() != null
                 ? timeManager.getSnapshot(target.getPlayer())
                 : timeManager.getSnapshot(target.getUniqueId(), false);
-        double progressLevel = target.getPlayer() != null
-                ? timeManager.getProgressLevel(target.getPlayer())
-                : timeManager.getProgressLevel(target.getUniqueId());
+        double progressLevel = timeManager.getProgressLevel(target);
 
         sender.sendMessage(Component.text(
                 "--- Spielzeitinfo: " + safeName(target) + " ---", NamedTextColor.GOLD));
