@@ -19,9 +19,11 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +53,8 @@ public class PlayerTimeManager {
     private final ConcurrentHashMap<UUID, Double> totalLevel = new ConcurrentHashMap<>();
     // Verhindert Kit-Farming durch Rejoin: pro Tag nur ein Kit
     private final ConcurrentHashMap<UUID, String> lastKitClaimDate = new ConcurrentHashMap<>();
+    // Spieler, die beim nächsten Login ihr Inventar/Position zurückgesetzt bekommen sollen
+    private final Set<UUID> pendingDayOverReset = ConcurrentHashMap.newKeySet();
 
     private volatile long defaultLimitSeconds;
     private volatile String currentDate;
@@ -498,16 +502,58 @@ public class PlayerTimeManager {
     }
 
     public synchronized void debugTriggerDayOver() {
+        // Alle bekannten UUIDs vor dem Leeren sammeln (auch Offline-Spieler)
+        Set<UUID> allTrackedUuids = new HashSet<>();
+        allTrackedUuids.addAll(playedToday.keySet());
+        allTrackedUuids.addAll(sessionPoints.keySet());
+        allTrackedUuids.addAll(lastKitClaimDate.keySet());
+        allTrackedUuids.addAll(totalLevel.keySet());
+        allTrackedUuids.addAll(playerLimits.keySet());
+
         currentDate = LocalDate.now().format(DATE_FORMAT);
         playedToday.clear();
         sessionPoints.clear();
         lastKitClaimDate.clear();
         plugin.getLogger().info("Debug: Tag vorbei ausgelöst (Tageswerte zurückgesetzt).");
         save();
+
+        // Online-Spieler sofort zurücksetzen; Offline-Spieler beim nächsten Login
+        plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
+            Set<UUID> currentlyOnline = new HashSet<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                currentlyOnline.add(player.getUniqueId());
+                if (!isWhitelisted(player.getUniqueId()) && !player.hasPermission("timeperday.bypass")) {
+                    player.getScheduler().run(plugin,
+                            scheduledTask -> resetOnlinePlayerState(player), null);
+                }
+            }
+            for (UUID uuid : allTrackedUuids) {
+                if (!currentlyOnline.contains(uuid) && !isWhitelisted(uuid)) {
+                    pendingDayOverReset.add(uuid);
+                }
+            }
+        });
     }
 
     public void debugTriggerWarning(Player player, long remainingSeconds) {
         sendWarning(player, Math.max(0L, remainingSeconds));
+    }
+
+    /**
+     * Entfernt den Spieler aus der Pending-Reset-Liste und gibt zurück, ob ein Reset ansteht.
+     * Wird vom PlayerListener beim Login aufgerufen.
+     */
+    public boolean consumePendingDayOverReset(UUID uuid) {
+        return pendingDayOverReset.remove(uuid);
+    }
+
+    /**
+     * Öffentlicher Wrapper für resetOnlinePlayerState – wird beim Login nach einem
+     * debugTriggerDayOver() aufgerufen, damit Inventar und Position auch für Spieler
+     * zurückgesetzt werden, die zum Zeitpunkt des Debug-Events offline waren.
+     */
+    public void applyDayOverReset(Player player) {
+        resetOnlinePlayerState(player);
     }
 
     public boolean debugTriggerTimeout(Player player) {
