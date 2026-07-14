@@ -113,6 +113,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         var snapshot = target.getPlayer() != null
                 ? timeManager.getSnapshot(target.getPlayer())
                 : timeManager.getSnapshot(target.getUniqueId(), false);
+        double progressLevel = timeManager.getProgressLevel(target);
 
         sender.sendMessage(Component.text(
                 "--- Spielzeitinfo: " + safeName(target) + " ---", NamedTextColor.GOLD));
@@ -125,6 +126,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
                 : PlayerTimeManager.formatTime(snapshot.remaining())));
         sender.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
         sender.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
+        sender.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(progressLevel)));
         sender.sendMessage(info("Whitelist (unbegrenzt)", snapshot.whitelisted() ? "Ja" : "Nein"));
     }
 

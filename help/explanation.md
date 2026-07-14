@@ -46,6 +46,7 @@ Ablauf:
 Wichtige Folge:
 
 - Alle passenden Items im Inventar zaehlen, auch ohne vorherigen Pickup-Event.
+- Das gespeicherte Gesamtlevel steigt erst bei `finalizeSessionProgress(...)`; vorher sieht man den Live-Fortschritt ueber `Progress-Level`.
 - Nicht konfigurierte Items erzeugen keine Punkte.
 - Whitelist- und Bypass-Spieler erhalten keine Progression.
 

@@ -36,12 +36,13 @@ mvn clean package
 1. Spieler sammelt waehrend der Tagesstunde konfigurierte Items im Inventar oder in der Enderchest.
 2. Jedes konfigurierte Item hat genau einen `level`-Wert, der direkt als Progressionsgewinn zaehlt.
 3. Session-Punkte in Anzeigen entsprechen dem aktuellen Inventarwert und werden nicht mehr beim Pickup gespeichert.
-4. Bei Zeitablauf oder Tagesreset wird vor dem Leeren/Finalisieren das komplette Inventar berechnet.
-5. Bei Zeitablauf wird der Spieler gekickt.
-6. Vor dem Kick gilt:
+4. `total-level` wird erst bei Zeitablauf oder Tagesreset erhöht; der Live-Fortschritt ist vorher über `Progress-Level` sichtbar.
+5. Bei Zeitablauf oder Tagesreset wird vor dem Leeren/Finalisieren das komplette Inventar berechnet.
+6. Bei Zeitablauf wird der Spieler gekickt.
+7. Vor dem Kick gilt:
    - `gained-level = session-points`
    - `total-level += gained-level`
-7. Session-Punkte werden auf 0 gesetzt.
+8. Session-Punkte werden auf 0 gesetzt.
 
 ## Kit-Logik
 

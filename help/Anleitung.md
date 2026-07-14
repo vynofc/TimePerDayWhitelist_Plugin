@@ -15,8 +15,9 @@ Diese Anleitung beschreibt das aktuell implementierte System im Plugin.
 1. Item-Werte stehen in `progression.items` in `config.yml`.
 2. Jedes Item hat genau einen `level`-Wert, der direkt als Gewinn pro Item zaehlt.
 3. Die Session-Punkte ergeben sich aus allen konfigurierten Items im Inventar, in der Rüstung, in der Offhand und in der Enderchest.
-4. Vor dem Leeren oder Finalisieren wird `Materialwert × Menge` über alle passenden Items berechnet.
-5. Beim Tageslimit-Ende gilt: `gainedLevel = sessionPoints`, danach `totalLevel += gainedLevel`.
+4. Das gespeicherte `totalLevel` steigt erst beim Tageslimit-Ende oder Reset; der aktuelle Live-Fortschritt ist vorher über `Progress-Level` sichtbar.
+5. Vor dem Leeren oder Finalisieren wird `Materialwert × Menge` über alle passenden Items berechnet.
+6. Beim Tageslimit-Ende gilt: `gainedLevel = sessionPoints`, danach `totalLevel += gainedLevel`.
 
 Beispiel:
 

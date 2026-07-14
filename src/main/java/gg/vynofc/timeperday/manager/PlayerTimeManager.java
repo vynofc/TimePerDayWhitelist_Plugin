@@ -6,6 +6,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.GameMode;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -751,12 +752,21 @@ public class PlayerTimeManager {
         return getTotalLevel(player.getUniqueId()) + getSessionPoints(player);
     }
 
+    public double getProgressLevel(OfflinePlayer player) {
+        Player onlinePlayer = player.getPlayer();
+        return onlinePlayer != null ? getProgressLevel(onlinePlayer) : getProgressLevel(player.getUniqueId());
+    }
+
     private void triggerDayOver(String newDate, String logMessage) {
         Set<UUID> allTrackedUuids = new HashSet<>(playedToday.keySet());
         allTrackedUuids.addAll(sessionPoints.keySet());
         allTrackedUuids.addAll(lastKitClaimDate.keySet());
         allTrackedUuids.addAll(totalLevel.keySet());
         allTrackedUuids.addAll(playerLimits.keySet());
+        Set<UUID> onlineAtTrigger = new HashSet<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            onlineAtTrigger.add(player.getUniqueId());
+        }
 
         currentDate = newDate;
         playedToday.clear();
@@ -764,25 +774,29 @@ public class PlayerTimeManager {
         plugin.getLogger().info(logMessage);
         save();
 
+        for (UUID uuid : allTrackedUuids) {
+            if (onlineAtTrigger.contains(uuid)) {
+                continue;
+            }
+            sessionPoints.remove(uuid);
+            if (!isWhitelisted(uuid)) {
+                pendingDayOverReset.add(uuid);
+            }
+        }
+
         plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
-            Set<UUID> currentlyOnline = new HashSet<>();
             for (Player player : Bukkit.getOnlinePlayers()) {
                 UUID uuid = player.getUniqueId();
-                currentlyOnline.add(uuid);
-                if (!isWhitelisted(uuid) && !player.hasPermission("timeperday.bypass")) {
-                    player.getScheduler().run(plugin,
-                            scheduledTask -> resetOnlinePlayerState(player), null);
-                } else {
-                    sessionPoints.remove(uuid);
-                }
-            }
-            for (UUID uuid : allTrackedUuids) {
-                if (currentlyOnline.contains(uuid)) {
+                if (!onlineAtTrigger.contains(uuid)) {
                     continue;
                 }
-                sessionPoints.remove(uuid);
-                if (!isWhitelisted(uuid)) {
-                    pendingDayOverReset.add(uuid);
+                if (!isWhitelisted(uuid) && !player.hasPermission("timeperday.bypass")) {
+                    player.getScheduler().run(plugin, scheduledTask -> {
+                        resetOnlinePlayerState(player);
+                        grantDailyKit(player);
+                    }, null);
+                } else {
+                    sessionPoints.remove(uuid);
                 }
             }
         });
