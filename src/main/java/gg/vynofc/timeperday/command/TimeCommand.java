@@ -38,21 +38,21 @@ public class TimeCommand implements CommandExecutor {
             return true;
         }
 
-        var uuid = player.getUniqueId();
-        long played = timeManager.getPlayedToday(uuid);
-        long limit = timeManager.getLimit(uuid);
-        long remaining = Math.max(0L, limit - played);
+        var snapshot = timeManager.getSnapshot(player);
+        int bestKitLevel = timeManager.getBestKitLevelFor(snapshot.totalLevel());
 
-        boolean unlimited = timeManager.isWhitelisted(uuid) || player.hasPermission("timeperday.bypass");
-
-        player.sendMessage(Component.text("--- Deine Spielzeit heute ---", NamedTextColor.GOLD));
-        player.sendMessage(info("Gespielt", PlayerTimeManager.formatTime(played)));
-        if (unlimited) {
+        player.sendMessage(Component.text("--- Dein Profil heute ---", NamedTextColor.GOLD));
+        player.sendMessage(info("Gespielt", PlayerTimeManager.formatTime(snapshot.played())));
+        player.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
+        player.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
+        player.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(timeManager.getProgressLevel(player.getUniqueId()))));
+        player.sendMessage(info("Bestes Kit", bestKitLevel > 0 ? String.valueOf(bestKitLevel) : "Keins"));
+        if (snapshot.unlimited()) {
             player.sendMessage(info("Limit", "Unbegrenzt"));
             player.sendMessage(info("Verbleibend", "Unbegrenzt"));
         } else {
-            player.sendMessage(info("Limit", PlayerTimeManager.formatTime(limit)));
-            player.sendMessage(info("Verbleibend", PlayerTimeManager.formatTime(remaining)));
+            player.sendMessage(info("Limit", PlayerTimeManager.formatTime(snapshot.limit())));
+            player.sendMessage(info("Verbleibend", PlayerTimeManager.formatTime(snapshot.remaining())));
         }
 
         return true;

@@ -16,10 +16,219 @@ warnings:
 
 # Nachrichten (unterstützt MiniMessage-Format)
 messages:
-  kick-line1: "<red>Deine tägliche Spielzeit ist aufgebraucht!"
-  kick-line2: "<gray>Du kannst morgen wieder spielen."
+  kick-title: "<gradient:#ff6b6b:#ffd166><bold>Spielzeit fuer heute verbraucht</bold></gradient>"
+  kick-line1: "<gray>Profil von <yellow>{player}</yellow><gray> - gespielt: <yellow>{played}</yellow> <dark_gray>| <gray>Limit: <yellow>{limit}</yellow>"
+  kick-line2: "<gray>Heute verdient: <yellow>+{gained-level}</yellow> <dark_gray>| <gray>Session: <yellow>{session-points}</yellow>"
+  kick-line3: "<gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
+  kick-line4: "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/time</yellow><gray> fuer dein Profil."
   warning: "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"
-  join-info: "<green>Verbleibende Spielzeit heute: <yellow>{remaining}"
+  join-title: "<gradient:#7bed9f:#70a1ff><bold>Willkommen zurueck, {player}!</bold></gradient>"
+  join-info: "<gray>Verbleibend: <yellow>{remaining}</yellow> <dark_gray>| <gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
+  join-line2: "<gray>Session heute: <yellow>{session-points}</yellow> <dark_gray>| <gray>Kit heute erhalten: <yellow>{kit-given}</yellow>"
+  join-tip: "<gray>Tipp: Nutze jederzeit <yellow>/time</yellow><gray> fuer deine komplette Profiluebersicht."
 
 # Ob beim Einloggen die verbleibende Zeit angezeigt wird
 show-on-join: true
+
+# ============================================================
+#  Progression (1 Stunde pro Tag)
+# ============================================================
+# Während der Tagesstunde sammelt man Session-Punkte über Items.
+# Beim Ablauf der Zeit werden Session-Punkte 1:1 in Gesamtlevel umgewandelt.
+progression:
+  items:
+    COAL:
+      level: 0.03
+    REDSTONE:
+      level: 0.045
+    LAPIS_LAZULI:
+      level: 0.05
+    RAW_IRON:
+      level: 0.055
+    IRON_INGOT:
+      level: 0.08
+    COPPER_INGOT:
+      level: 0.06
+    GOLD_INGOT:
+      level: 0.1
+    QUARTZ:
+      level: 0.11
+    AMETHYST_SHARD:
+      level: 0.12
+    DIAMOND:
+      level: 0.2
+    EMERALD:
+      level: 0.22
+    NETHERITE_SCRAP:
+      level: 0.35
+
+  # Kit-System: immer nur das höchste erreichte Kit wird vergeben.
+  # Pro Tag nur 1x Kit pro Spieler.
+  spawn-kits:
+    "10":
+      WOODEN_SWORD: 1
+      WOODEN_AXE: 1
+      WOODEN_PICKAXE: 1
+      WOODEN_SHOVEL: 1
+      WOODEN_HOE: 1
+      BREAD: 5
+    "20":
+      STONE_SWORD: 1
+      STONE_AXE: 1
+      STONE_PICKAXE: 1
+      STONE_SHOVEL: 1
+      STONE_HOE: 1
+      BREAD: 6
+    "30":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      BREAD: 8
+    "40":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      BREAD: 10
+    "50":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      BREAD: 12
+    "60":
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_PICKAXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 10
+    "70":
+      DIAMOND_PICKAXE: 1
+      IRON_SWORD: 1
+      IRON_AXE: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 12
+    "80":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      IRON_SWORD: 1
+      IRON_SHOVEL: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 14
+    "90":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      IRON_SWORD: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      COOKED_BEEF: 16
+    "100":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      IRON_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 1
+      COOKED_BEEF: 16
+    "110":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      IRON_HELMET: 1
+      IRON_BOOTS: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 1
+      COOKED_BEEF: 18
+    "120":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      IRON_HELMET: 1
+      IRON_LEGGINGS: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 2
+      COOKED_BEEF: 18
+    "130":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      DIAMOND_LEGGINGS: 1
+      IRON_HELMET: 1
+      IRON_CHESTPLATE: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 2
+      COOKED_BEEF: 20
+    "140":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      DIAMOND_LEGGINGS: 1
+      DIAMOND_CHESTPLATE: 1
+      IRON_HELMET: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 3
+      COOKED_BEEF: 20
+    "150":
+      DIAMOND_PICKAXE: 1
+      DIAMOND_AXE: 1
+      DIAMOND_SHOVEL: 1
+      DIAMOND_SWORD: 1
+      DIAMOND_HOE: 1
+      DIAMOND_BOOTS: 1
+      DIAMOND_LEGGINGS: 1
+      DIAMOND_CHESTPLATE: 1
+      DIAMOND_HELMET: 1
+      SHIELD: 1
+      GOLDEN_APPLE: 4
+      ENCHANTED_GOLDEN_APPLE: 1
+      COOKED_BEEF: 24

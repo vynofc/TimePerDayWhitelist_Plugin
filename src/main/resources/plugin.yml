@@ -8,7 +8,7 @@ folia-supported: true
 
 commands:
   admintime:
-    description: Verwalte die täglichen Spielzeitlimits
+    description: Verwalte Zeit, Level und globale Resets
     usage: /admintime <subcommand>
     permission: timeperday.admin
     aliases: [ timeperday, tpd ]
@@ -16,6 +16,10 @@ commands:
     description: Zeigt die verbleibende Spielzeit für den Tag an
     usage: /time
     permission: timeperday.use
+  debugtime:
+    description: Debug-Events manuell auslösen (z. B. Tageswechsel)
+    usage: /debugtime <dayover|warn|timeout>
+    permission: timeperday.debug
 
 permissions:
   timeperday.admin:
@@ -27,3 +31,6 @@ permissions:
   timeperday.use:
     description: Zugriff auf die TimePerDay-Funktionalität
     default: true
+  timeperday.debug:
+    description: Zugriff auf Debug-Events für TimePerDay
+    default: op

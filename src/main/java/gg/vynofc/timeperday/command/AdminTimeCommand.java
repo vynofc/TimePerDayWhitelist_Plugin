@@ -1,6 +1,7 @@
 package gg.vynofc.timeperday.command;
 
 import gg.vynofc.timeperday.TimePerDayPlugin;
+import gg.vynofc.timeperday.gui.AdminMenuService;
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -22,10 +23,13 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
 
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
+    private final AdminMenuService adminMenuService;
 
-    public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager) {
+    public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager,
+                            AdminMenuService adminMenuService) {
         this.plugin = plugin;
         this.timeManager = timeManager;
+        this.adminMenuService = adminMenuService;
     }
 
     // -------------------------------------------------------------------------
@@ -50,9 +54,13 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase()) {
             case "set"        -> handleSet(sender, args);
             case "info"       -> handleInfo(sender, args);
-            case "reset"      -> handleReset(sender, args);
+            case "setlevel"   -> handleSetLevel(sender, args);
+            case "addlevel"   -> handleAddLevel(sender, args);
+            case "reset"      -> handleResetAll(sender, args);
+            case "resetplayer"-> handleResetPlayer(sender, args);
             case "setdefault" -> handleSetDefault(sender, args);
             case "whitelist"  -> handleWhitelist(sender, args);
+            case "gui"        -> handleGui(sender, args);
             case "reload"     -> handleReload(sender);
             default           -> sendHelp(sender);
         }
@@ -102,24 +110,88 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
             if (target == null) return;
         }
 
-        var uuid = target.getUniqueId();
-        long played    = timeManager.getPlayedToday(uuid);
-        long limit     = timeManager.getLimit(uuid);
-        long remaining = Math.max(0L, limit - played);
-        boolean wl     = timeManager.isWhitelisted(uuid);
+        var snapshot = target.getPlayer() != null
+                ? timeManager.getSnapshot(target.getPlayer())
+                : timeManager.getSnapshot(target.getUniqueId(), false);
 
         sender.sendMessage(Component.text(
                 "--- Spielzeitinfo: " + safeName(target) + " ---", NamedTextColor.GOLD));
-        sender.sendMessage(info("Gespielt heute", PlayerTimeManager.formatTime(played)));
-        sender.sendMessage(info("Tageslimit", PlayerTimeManager.formatTime(limit)));
-        sender.sendMessage(info("Verbleibend", PlayerTimeManager.formatTime(remaining)));
-        sender.sendMessage(info("Whitelist (unbegrenzt)", wl ? "Ja" : "Nein"));
+        sender.sendMessage(info("Gespielt heute", PlayerTimeManager.formatTime(snapshot.played())));
+        sender.sendMessage(info("Tageslimit", snapshot.unlimited()
+                ? "Unbegrenzt"
+                : PlayerTimeManager.formatTime(snapshot.limit())));
+        sender.sendMessage(info("Verbleibend", snapshot.unlimited()
+                ? "Unbegrenzt"
+                : PlayerTimeManager.formatTime(snapshot.remaining())));
+        sender.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
+        sender.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
+        sender.sendMessage(info("Whitelist (unbegrenzt)", snapshot.whitelisted() ? "Ja" : "Nein"));
     }
 
-    /** /admintime reset <Spieler> */
-    private void handleReset(CommandSender sender, String[] args) {
+    /** /admintime setlevel <Spieler> <Level> */
+    private void handleSetLevel(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(error("Verwendung: /admintime setlevel <Spieler> <Level>"));
+            return;
+        }
+        OfflinePlayer target = resolvePlayer(sender, args[1]);
+        if (target == null) return;
+
+        try {
+            double level = Double.parseDouble(args[2]);
+            if (level < 0.0D) throw new NumberFormatException();
+            timeManager.setTotalLevel(target.getUniqueId(), level);
+            sender.sendMessage(Component.text(
+                    "Gesamtlevel von " + safeName(target) + " auf "
+                            + PlayerTimeManager.formatLevel(level) + " gesetzt.",
+                    NamedTextColor.GREEN));
+        } catch (NumberFormatException e) {
+            sender.sendMessage(error("Ungültiger Level-Wert: " + args[2]));
+        }
+    }
+
+    /** /admintime addlevel <Spieler> <Level> */
+    private void handleAddLevel(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(error("Verwendung: /admintime addlevel <Spieler> <Level>"));
+            return;
+        }
+        OfflinePlayer target = resolvePlayer(sender, args[1]);
+        if (target == null) return;
+
+        try {
+            double amount = Double.parseDouble(args[2]);
+            if (amount <= 0.0D) throw new NumberFormatException();
+            timeManager.addTotalLevel(target.getUniqueId(), amount);
+            sender.sendMessage(Component.text(
+                    "Gesamtlevel von " + safeName(target) + " um "
+                            + PlayerTimeManager.formatLevel(amount) + " erhöht.",
+                    NamedTextColor.GREEN));
+        } catch (NumberFormatException e) {
+            sender.sendMessage(error("Ungültiger Level-Wert: " + args[2]));
+        }
+    }
+
+    /** /admintime reset */
+    private void handleResetAll(CommandSender sender, String[] args) {
+        if (args.length != 1) {
+            sender.sendMessage(error("Verwendung: /admintime reset"));
+            sender.sendMessage(Component.text(
+                    "Für einzelnen Spieler: /admintime resetplayer <Spieler>",
+                    NamedTextColor.YELLOW));
+            return;
+        }
+
+        timeManager.resetEverything();
+        Bukkit.broadcast(Component.text(
+                "Der Serverfortschritt wurde global zurückgesetzt (Zeit, Level, Session, Spielerzustände).",
+                NamedTextColor.RED));
+    }
+
+    /** /admintime resetplayer <Spieler> */
+    private void handleResetPlayer(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(error("Verwendung: /admintime reset <Spieler>"));
+            sender.sendMessage(error("Verwendung: /admintime resetplayer <Spieler>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -185,6 +257,19 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("Konfiguration neu geladen.", NamedTextColor.GREEN));
     }
 
+    /** /admintime gui */
+    private void handleGui(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(error("Die Admin-GUI kann nur von Spielern geöffnet werden."));
+            return;
+        }
+        if (args.length > 1) {
+            sender.sendMessage(error("Verwendung: /admintime gui"));
+            return;
+        }
+        adminMenuService.openMainMenu(player);
+    }
+
     // -------------------------------------------------------------------------
     // Tab-Vervollständigung
     // -------------------------------------------------------------------------
@@ -197,13 +282,14 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         if (!sender.hasPermission("timeperday.admin")) return List.of();
 
         if (args.length == 1) {
-            return filter(Arrays.asList("set", "info", "reset", "setdefault", "whitelist", "reload"),
+            return filter(Arrays.asList("set", "info", "setlevel", "addlevel", "reset", "resetplayer",
+                    "setdefault", "whitelist", "gui", "reload"),
                     args[0]);
         }
 
         if (args.length == 2) {
             return switch (args[0].toLowerCase()) {
-                case "set", "info", "reset" -> onlinePlayerNames(args[1]);
+                case "set", "info", "setlevel", "addlevel", "resetplayer" -> onlinePlayerNames(args[1]);
                 case "whitelist"            -> filter(List.of("add", "remove"), args[1]);
                 default                     -> List.of();
             };
@@ -224,7 +310,6 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
      * Löst einen Spielernamen zu einem OfflinePlayer auf.
      * Schlägt fehl und sendet eine Fehlermeldung, wenn der Spieler unbekannt ist.
      */
-    @SuppressWarnings("deprecation")
     private @Nullable OfflinePlayer resolvePlayer(CommandSender sender, String name) {
         // Zuerst online suchen (schnell & sicher)
         Player online = Bukkit.getPlayerExact(name);
@@ -271,9 +356,13 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("=== TimePerDay Befehle ===", NamedTextColor.GOLD));
         helpLine(sender, "/admintime set <Spieler> <Minuten>",        "Individuelles Tageslimit setzen");
         helpLine(sender, "/admintime info [Spieler]",                 "Spielzeitinfo anzeigen");
-        helpLine(sender, "/admintime reset <Spieler>",                "Heutige Spielzeit zurücksetzen");
+        helpLine(sender, "/admintime setlevel <Spieler> <Level>",     "Gesamtlevel setzen");
+        helpLine(sender, "/admintime addlevel <Spieler> <Level>",     "Gesamtlevel erhöhen");
+        helpLine(sender, "/admintime reset",                          "GLOBAL: Alles zurücksetzen");
+        helpLine(sender, "/admintime resetplayer <Spieler>",          "Einzelnen Spieler zurücksetzen");
         helpLine(sender, "/admintime setdefault <Minuten>",           "Standard-Tageslimit setzen");
         helpLine(sender, "/admintime whitelist <add|remove> <Spieler>", "Whitelist verwalten (unbegrenzt)");
+        helpLine(sender, "/admintime gui",                            "Ingame-Adminoberfläche öffnen");
         helpLine(sender, "/admintime reload",                         "Konfiguration neu laden");
     }
 

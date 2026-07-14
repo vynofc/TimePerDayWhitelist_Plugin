@@ -1,124 +1,97 @@
-# TimePerDayWhitelist_Plugin
+# TimePerDayWhitelist
 
-Ein leichtgewichtiges Minecraft-Server-Plugin (Paper/Spigot), das jedem Spieler ein **tägliches Spielzeit-Limit** zuweist. Sobald die erlaubte Zeit aufgebraucht ist, wird der Spieler vom Server gekickt und kann erst nach dem täglichen Reset wieder beitreten. Die verbleibende Zeit wird pro Spieler verfolgt und persistent gespeichert.
+Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 
----
+## Features
 
-## ✨ Features
+- 1 Stunde Spielzeit pro Tag (konfigurierbar)
+- Auto-Kick bei Tageslimit
+- Tagesreset über Datumswechsel
+- Item-basierte Session-Punkte mit genau einem `level`-Wert pro Item
+- Fortschrittsrelevante Item-Pickups zeigen kurz eine Action-Bar mit dem verdienten Level
+- Session-Punkte werden beim Tageslimit in Gesamtlevel umgerechnet
+- Gesamtlevel wird persistent gespeichert
+- Level-basierte Spawn-Kits in 10er-Stufen bis Level 150
+- Join-/Kick-/Time-Anzeige als Profiluebersicht inkl. `/time`-Hinweis
+- Admin-Funktionen für Zeit und Level
+- Ingame-Admin-Kisten-UI für Spielerverwaltung, Limits, Level, Whitelist, Reload und Global-Reset
+- Konfigurierte MiniMessage-Nachrichten werden tatsächlich als formatierte Components gerendert
 
-- ⏱️ **Tägliches Zeitlimit** pro Spieler (in Minuten konfigurierbar)
-- 🔄 **Automatischer Reset** zu einer konfigurierbaren Uhrzeit
-- 👮 **Auto-Kick**, wenn die tägliche Spielzeit aufgebraucht ist
-- 💾 **Persistente Speicherung** der verbleibenden Zeit pro Spieler
-- 🛠️ **Admin-Befehle** zum Anzeigen, Setzen und Zurücksetzen von Zeit
-- ⚙️ Flexible Konfiguration über `config.yml`
+## Installation
 
----
+1. JAR in den `plugins/`-Ordner legen.
+2. Server starten.
+3. `config.yml` anpassen.
+4. `/admintime reload` ausführen oder Server neu starten.
 
-## 📦 Installation
+### Build
 
-1. Lade die neueste `TimePerDayWhitelist-<version>.jar` aus den [Releases](../../releases) herunter (oder baue sie selbst, siehe unten).
-2. Lege die JAR in den `plugins/`-Ordner deines Servers.
-3. Starte den Server einmal neu — die Datei `plugins/TimePerDayWhitelist/config.yml` wird automatisch erstellt.
-4. Passe die `config.yml` nach Belieben an und führe `/timeperday reload` aus (oder starte den Server neu).
-
-### Selbst bauen
-
-Voraussetzungen: **JDK 21+** und **Maven**.
+Voraussetzungen: JDK 21+, Maven
 
 ```bash
-git clone https://github.com/niliees/TimePerDayWhitelist_Plugin.git
-cd TimePerDayWhitelist_Plugin
 mvn clean package
 ```
-```
 
+## Progressionslogik
 
-Die fertige JAR findest du anschließend unter `target/`.
+1. Spieler sammelt waehrend der Tagesstunde Session-Punkte ueber konfigurierte Item-Pickups.
+2. Jedes konfigurierte Item hat genau einen `level`-Wert, der direkt als Progressionsgewinn zaehlt.
+3. Bei Zeitablauf wird der Spieler gekickt.
+4. Vor dem Kick gilt:
+   - `gained-level = session-points`
+   - `total-level += gained-level`
+5. Session-Punkte werden auf 0 gesetzt.
 
----
+## Kit-Logik
 
-## ⚙️ Konfiguration
+- Kits kommen aus `progression.spawn-kits` in der Config.
+- Es wird nur das höchste passende Kit vergeben.
+- Pro Spieler pro Tag wird das Kit nur einmal vergeben.
+- Standardstaffel läuft in 10er-Schritten von Level 10 bis 150.
 
-Beispielhafte `config.yml`:
+Frühe Stufen:
 
-```yaml
-# Tägliches Zeitlimit in Minuten
-time-limit: 120
+- 10: Holz-Tools + 5 Brot
+- 20: Stein-Tools
+- 30: Eisen-Tools + 8 Brot
+- 40: Eisen-Tools + Iron Boots + Iron Leggings
 
-# Uhrzeit des täglichen Resets (24h-Format: HH:MM)
-reset-time: "04:00"
-
-# Nachricht beim Kicken nach Ablauf der Zeit
-kick-message: "§cDeine tägliche Spielzeit ist aufgebraucht. Bis morgen!"
-
-# Warnung, wenn nur noch X Minuten verbleiben
-warning-at-minutes: 10
-```
-
-
----
-
-## 🎮 Befehle
+## Befehle
 
 | Befehl | Beschreibung | Permission |
 |---|---|---|
-| `/timeperday` | Zeigt eigene verbleibende Spielzeit | `timeperday.use` |
-| `/timeperday check <player>` | Zeigt verbleibende Zeit eines Spielers | `timeperday.admin` |
-| `/timeperday set <player> <minuten>` | Setzt die verbleibende Zeit | `timeperday.admin` |
-| `/timeperday reset <player>` | Setzt die Spielzeit auf den Standardwert | `timeperday.admin` |
-| `/timeperday reload` | Lädt die Konfiguration neu | `timeperday.admin` |
+| `/time` | Zeigt Zeit, Session-Punkte, Gesamtlevel | `timeperday.use` |
+| `/admintime info [Spieler]` | Zeit + Progressionswerte anzeigen | `timeperday.admin` |
+| `/admintime set <Spieler> <Minuten>` | Tageslimit setzen | `timeperday.admin` |
+| `/admintime reset` | GLOBAL: setzt aktive Weltzustände und alle Spieler-/Leveldaten zurück | `timeperday.admin` |
+| `/admintime resetplayer <Spieler>` | Setzt nur den angegebenen Spieler zurück | `timeperday.admin` |
+| `/admintime setdefault <Minuten>` | Standardlimit setzen | `timeperday.admin` |
+| `/admintime setlevel <Spieler> <Level>` | Gesamtlevel setzen | `timeperday.admin` |
+| `/admintime addlevel <Spieler> <Level>` | Gesamtlevel addieren | `timeperday.admin` |
+| `/admintime whitelist <add\|remove> <Spieler>` | Zeitlimit-Bypass verwalten | `timeperday.admin` |
+| `/admintime gui` | Öffnet die Ingame-Adminoberfläche | `timeperday.admin` |
+| `/admintime reload` | Config und Daten neu laden | `timeperday.admin` |
+| `/debugtime <dayover\|warn\|timeout>` | Manuelle Debug-Events auslösen (Tag vorbei, Warnung, Timeout) | `timeperday.debug` |
 
----
+## Wichtige Config-Bereiche
 
-## 🔐 Permissions
+- `default-limit-minutes`
+- `warnings`
+- `messages.*`
+- `progression.items.*.level`
+- `progression.spawn-kits.*`
 
-| Permission | Beschreibung | Default |
-|---|---|---|
-| `timeperday.use` | Eigene Spielzeit anzeigen | `true` |
-| `timeperday.admin` | Vollzugriff auf alle Admin-Befehle | `op` |
+## Admin-GUI
 
----
+- `/admintime gui` öffnet eine Kistenoberfläche für Admins.
+- Dort können Spieler ausgewählt und Limits, heutige Zeit, Gesamtlevel und Whitelist verwaltet werden.
+- Reload und Global-Reset sind ebenfalls über die GUI erreichbar.
 
-## 🧩 Projektstruktur
+## Hinweis
 
-```
-src/main/java/de/niliees/timeperday/
-├── TimePerDayPlugin.java       # Plugin-Einstiegspunkt & Initializer
-├── command/
-│   └── TimeCommand.java        # Befehlsverarbeitung für /timeperday
-├── listener/
-│   └── PlayerListener.java     # Join/Leave/Tick-Event-Listener
-└── manager/
-    └── PlayerTimeManager.java  # Verwaltung & Persistenz der Spielzeit
-```
+Aktuell basiert die Punktevergabe auf Item-Pickup. Dadurch ist Drop/Pickup-Farming möglich.
+Wenn du das verhindern willst, erweitere die Vergabe später auf kontrollierte Quellen (z. B. BlockBreak/Craft/MobDrop).
 
+## Lizenz
 
----
-
-## 🐞 Bugs & Feedback
-
-Probleme oder Featurewünsche bitte als [Issue](../../issues) melden. Pull Requests sind willkommen!
-
----
-
-## 📄 Lizenz
-
-Dieses Projekt steht unter der in der Datei [LICENSE](LICENSE) hinterlegten Lizenz.
-
----
-
-## 👤 Autor
-
-[niliees](https://github.com/niliees)
-```
-Fertig! Die README ist nun eine vollständige Plugin-Dokumentation mit allen wichtigen Abschnitten:
-- **Features & Überblick** oben
-- **Installation** (inkl. selbstbau)
-- **Konfiguration** mit praktischen Beispielen
-- **Befehle & Permissions** in übersichtlichen Tabellen
-- **Projektstruktur** für Entwickler
-- **Lizenz & Support** am Ende
-
-Du kannst die Werte noch anpassen, wenn sie nicht exakt mit deiner `config.yml` oder `plugin.yml` übereinstimmen! 🚀
-```
+Siehe [LICENSE](LICENSE).
