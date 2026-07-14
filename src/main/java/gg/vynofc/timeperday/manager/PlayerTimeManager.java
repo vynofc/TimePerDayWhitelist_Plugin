@@ -631,7 +631,7 @@ public class PlayerTimeManager {
             }
         }
         ItemStack offhand = player.getInventory().getItemInOffHand();
-        if (offhand.getType() != Material.AIR) {
+        if (offhand != null && offhand.getType() != Material.AIR) {
             double lvl = readItemLevel(offhand.getType());
             if (lvl > 0.0D) {
                 sessionPoints.merge(uuid, lvl * offhand.getAmount(), Double::sum);

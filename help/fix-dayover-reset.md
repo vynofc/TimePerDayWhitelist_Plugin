@@ -82,7 +82,7 @@ public synchronized void debugTriggerDayOver() {
 }
 ```
 
-**Neu:**
+**Neu (aktuell):**
 ```java
 public synchronized void debugTriggerDayOver() {
     // Alle bekannten UUIDs vor dem Leeren sammeln (auch Offline-Spieler)
@@ -95,7 +95,9 @@ public synchronized void debugTriggerDayOver() {
 
     currentDate = LocalDate.now().format(DATE_FORMAT);
     playedToday.clear();
-    sessionPoints.clear();
+    // sessionPoints wird NICHT hier geleert – Online-Spieler werden via
+    // resetOnlinePlayerState (Inventar zählen + finalisieren) behandelt;
+    // Offline-Spieler weiter unten im Scheduler finalisiert.
     lastKitClaimDate.clear();
     save();
 
@@ -104,13 +106,23 @@ public synchronized void debugTriggerDayOver() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             currentlyOnline.add(player.getUniqueId());
             if (!isWhitelisted(player.getUniqueId()) && !player.hasPermission("timeperday.bypass")) {
+                // resetOnlinePlayerState zählt Inventar und finalisiert Session-Punkte
                 player.getScheduler().run(plugin,
                         scheduledTask -> resetOnlinePlayerState(player), null);
+            } else {
+                // Whitelisted/Bypass: Session-Punkte einfach verwerfen
+                sessionPoints.remove(player.getUniqueId());
             }
         }
         for (UUID uuid : allTrackedUuids) {
-            if (!currentlyOnline.contains(uuid) && !isWhitelisted(uuid)) {
-                pendingDayOverReset.add(uuid);
+            if (!currentlyOnline.contains(uuid)) {
+                if (!isWhitelisted(uuid)) {
+                    // Offline-Spieler: Session-Punkte ohne Inventar finalisieren
+                    finalizeSessionProgress(uuid);
+                    pendingDayOverReset.add(uuid);
+                } else {
+                    sessionPoints.remove(uuid);
+                }
             }
         }
     });
@@ -122,19 +134,24 @@ public synchronized void debugTriggerDayOver() {
 1. **UUIDs sammeln (vor dem Clear):** Alle Spieler-UUIDs aus allen Maps werden gesammelt,
    *bevor* die Maps geleert werden. Das ist wichtig – danach wäre die Information weg.
 
-2. **Maps leeren + speichern:** Wie vorher.
+2. **Maps leeren + speichern:** `playedToday` und `lastKitClaimDate` werden geleert.
+   `sessionPoints` wird bewusst *nicht* hier geleert – die Finalisierung erfolgt
+   per Spieler im Scheduler-Block darunter.
 
 3. **GlobalRegionScheduler:** Spieler-Aktionen (Inventar, Teleport) müssen im richtigen
    Bukkit/Folia-Thread laufen. `getGlobalRegionScheduler().run(...)` stellt das sicher.
 
 4. **Online-Spieler sofort zurücksetzen:** Für jeden gerade eingeloggten Spieler (ohne
    Whitelist/Bypass) wird `resetOnlinePlayerState(player)` über den Spieler-eigenen
-   Scheduler aufgerufen. Das leert Inventar, setzt XP/Health zurück und teleportiert
-   zum Spawn.
+   Scheduler aufgerufen. Diese Methode zählt zuerst alle Inventar-Items (via
+   `addInventoryToSessionPoints`), überträgt die Session-Punkte in den Gesamtlevel
+   (`finalizeSessionProgress`) und leert dann Inventar, XP, Health, Position.
 
-5. **Offline-Spieler in `pendingDayOverReset` eintragen:** Alle bekannten UUIDs, die
-   *nicht* gerade online sind, werden in das Set eingetragen. Beim nächsten Login
-   übernimmt `PlayerListener` den Rest.
+5. **Offline-Spieler finalisieren + in `pendingDayOverReset` eintragen:** Für alle
+   bekannten UUIDs, die *nicht* gerade online sind, werden die Session-Punkte via
+   `finalizeSessionProgress` in den Gesamtlevel übertragen (ohne Inventar, da kein
+   Zugriff möglich). Danach werden sie ins Pending-Reset-Set eingetragen.
+   Beim nächsten Login übernimmt `PlayerListener` den Rest.
 
 ---
 
