@@ -143,6 +143,12 @@ public class PlayerTimeManager {
         if (!today.equals(currentDate)) {
             currentDate = today;
             playedToday.clear();
+            // Session-Punkte vor dem Leeren in den Gesamtlevel übertragen
+            for (UUID uuid : new HashSet<>(sessionPoints.keySet())) {
+                if (!isWhitelisted(uuid)) {
+                    finalizeSessionProgress(uuid);
+                }
+            }
             sessionPoints.clear();
             plugin.getLogger().info("Tägliche Spielzeiten zurückgesetzt (Mitternacht).");
         }
@@ -512,7 +518,9 @@ public class PlayerTimeManager {
 
         currentDate = LocalDate.now().format(DATE_FORMAT);
         playedToday.clear();
-        sessionPoints.clear();
+        // sessionPoints wird NICHT hier geleert – Online-Spieler werden via
+        // resetOnlinePlayerState (Inventar zählen + finalisieren) behandelt;
+        // Offline-Spieler weiter unten im Scheduler finalisiert.
         lastKitClaimDate.clear();
         plugin.getLogger().info("Debug: Tag vorbei ausgelöst (Tageswerte zurückgesetzt).");
         save();
@@ -523,13 +531,23 @@ public class PlayerTimeManager {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 currentlyOnline.add(player.getUniqueId());
                 if (!isWhitelisted(player.getUniqueId()) && !player.hasPermission("timeperday.bypass")) {
+                    // resetOnlinePlayerState zählt Inventar und finalisiert Session-Punkte
                     player.getScheduler().run(plugin,
                             scheduledTask -> resetOnlinePlayerState(player), null);
+                } else {
+                    // Whitelisted/Bypass: Session-Punkte einfach verwerfen
+                    sessionPoints.remove(player.getUniqueId());
                 }
             }
             for (UUID uuid : allTrackedUuids) {
-                if (!currentlyOnline.contains(uuid) && !isWhitelisted(uuid)) {
-                    pendingDayOverReset.add(uuid);
+                if (!currentlyOnline.contains(uuid)) {
+                    if (!isWhitelisted(uuid)) {
+                        // Offline-Spieler: Session-Punkte ohne Inventar finalisieren
+                        finalizeSessionProgress(uuid);
+                        pendingDayOverReset.add(uuid);
+                    } else {
+                        sessionPoints.remove(uuid);
+                    }
                 }
             }
         });
@@ -596,7 +614,37 @@ public class PlayerTimeManager {
         });
     }
 
+    private void addInventoryToSessionPoints(Player player) {
+        UUID uuid = player.getUniqueId();
+        for (ItemStack item : player.getInventory().getStorageContents()) {
+            if (item == null || item.getType() == Material.AIR) continue;
+            double lvl = readItemLevel(item.getType());
+            if (lvl > 0.0D) {
+                sessionPoints.merge(uuid, lvl * item.getAmount(), Double::sum);
+            }
+        }
+        for (ItemStack item : player.getInventory().getArmorContents()) {
+            if (item == null || item.getType() == Material.AIR) continue;
+            double lvl = readItemLevel(item.getType());
+            if (lvl > 0.0D) {
+                sessionPoints.merge(uuid, lvl * item.getAmount(), Double::sum);
+            }
+        }
+        ItemStack offhand = player.getInventory().getItemInOffHand();
+        if (offhand.getType() != Material.AIR) {
+            double lvl = readItemLevel(offhand.getType());
+            if (lvl > 0.0D) {
+                sessionPoints.merge(uuid, lvl * offhand.getAmount(), Double::sum);
+            }
+        }
+    }
+
     private void resetOnlinePlayerState(Player player) {
+        UUID uuid = player.getUniqueId();
+        // Inventar-Items vor dem Leeren zu den Session-Punkten hinzufügen und finalisieren
+        addInventoryToSessionPoints(player);
+        finalizeSessionProgress(uuid);
+
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
         player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));
