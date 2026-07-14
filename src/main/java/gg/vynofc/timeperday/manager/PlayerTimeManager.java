@@ -497,6 +497,31 @@ public class PlayerTimeManager {
         save();
     }
 
+    public synchronized void debugTriggerDayOver() {
+        currentDate = LocalDate.now().format(DATE_FORMAT);
+        playedToday.clear();
+        sessionPoints.clear();
+        lastKitClaimDate.clear();
+        plugin.getLogger().info("Debug: Tag vorbei ausgelöst (Tageswerte zurückgesetzt).");
+        save();
+    }
+
+    public void debugTriggerWarning(Player player, long remainingSeconds) {
+        sendWarning(player, Math.max(0L, remainingSeconds));
+    }
+
+    public boolean debugTriggerTimeout(Player player) {
+        UUID uuid = player.getUniqueId();
+        if (isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
+            return false;
+        }
+
+        playedToday.put(uuid, getLimit(uuid));
+        double gained = finalizeSessionProgress(uuid);
+        kickPlayer(player, gained, getTotalLevel(uuid));
+        return true;
+    }
+
     /**
      * Globaler Hard-Reset für das Plugin:
      * - alle gespeicherten Spieler-/Progressionsdaten
@@ -567,6 +592,10 @@ public class PlayerTimeManager {
     public void setWhitelisted(UUID uuid, boolean exempt) {
         whitelist.put(uuid, exempt);
         save();
+    }
+
+    public TimePerDayPlugin getPlugin() {
+        return plugin;
     }
 
     public long getDefaultLimitSeconds() {

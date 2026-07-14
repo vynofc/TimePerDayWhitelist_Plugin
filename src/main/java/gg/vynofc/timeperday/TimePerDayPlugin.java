@@ -2,6 +2,7 @@ package gg.vynofc.timeperday;
 
 import gg.vynofc.timeperday.command.TimeCommand;
 import gg.vynofc.timeperday.command.AdminTimeCommand;
+import gg.vynofc.timeperday.command.DebugTimeCommand;
 import gg.vynofc.timeperday.gui.AdminMenuListener;
 import gg.vynofc.timeperday.gui.AdminMenuService;
 import gg.vynofc.timeperday.listener.PlayerItemListener;
@@ -37,6 +38,13 @@ public class TimePerDayPlugin extends JavaPlugin {
         var timeCommand = getCommand("time");
         if (timeCommand != null) {
             timeCommand.setExecutor(timeCmd);
+        }
+
+        DebugTimeCommand debugCmd = new DebugTimeCommand(timeManager);
+        var debugCommand = getCommand("debugtime");
+        if (debugCommand != null) {
+            debugCommand.setExecutor(debugCmd);
+            debugCommand.setTabCompleter(debugCmd);
         }
 
         // Globaler Takt läuft im Server-Kontext; spielerbezogene Aktionen werden

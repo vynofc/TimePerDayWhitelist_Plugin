@@ -71,6 +71,7 @@ Frühe Stufen:
 | `/admintime whitelist <add\|remove> <Spieler>` | Zeitlimit-Bypass verwalten | `timeperday.admin` |
 | `/admintime gui` | Öffnet die Ingame-Adminoberfläche | `timeperday.admin` |
 | `/admintime reload` | Config und Daten neu laden | `timeperday.admin` |
+| `/debugtime <dayover\|warn\|timeout>` | Manuelle Debug-Events auslösen (Tag vorbei, Warnung, Timeout) | `timeperday.debug` |
 
 ## Wichtige Config-Bereiche
 
