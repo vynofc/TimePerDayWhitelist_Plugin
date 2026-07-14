@@ -56,7 +56,7 @@ Verfügbare Platzhalter in `messages`:
 
 ## Befehle
 
-- `/time` zeigt Zeit, Session-Punkte, Gesamtlevel, Progress-Level und bestes Kit.
+- `/timeleft` zeigt Zeit, Session-Punkte, Gesamtlevel, Progress-Level und bestes Kit.
 - `/admintime info [Spieler]` zeigt zusätzlich Progressionswerte.
 - `/admintime setlevel <Spieler> <Level>` setzt Gesamtlevel.
 - `/admintime addlevel <Spieler> <Level>` addiert Gesamtlevel.

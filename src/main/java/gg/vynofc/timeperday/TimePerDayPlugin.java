@@ -35,7 +35,7 @@ public class TimePerDayPlugin extends JavaPlugin {
         }
 
         TimeCommand timeCmd = new TimeCommand(timeManager);
-        var timeCommand = getCommand("time");
+        var timeCommand = getCommand("timeleft");
         if (timeCommand != null) {
             timeCommand.setExecutor(timeCmd);
         }

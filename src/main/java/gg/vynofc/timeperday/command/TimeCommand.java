@@ -34,7 +34,7 @@ public class TimeCommand implements CommandExecutor {
         }
 
         if (args.length > 0) {
-            player.sendMessage(Component.text("Verwendung: /time", NamedTextColor.RED));
+            player.sendMessage(Component.text("Verwendung: /timeleft", NamedTextColor.RED));
             return true;
         }
 

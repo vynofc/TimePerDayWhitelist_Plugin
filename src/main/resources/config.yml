@@ -20,12 +20,12 @@ messages:
   kick-line1: "<gray>Profil von <yellow>{player}</yellow><gray> - gespielt: <yellow>{played}</yellow> <dark_gray>| <gray>Limit: <yellow>{limit}</yellow>"
   kick-line2: "<gray>Heute verdient: <yellow>+{gained-level}</yellow> <dark_gray>| <gray>Session: <yellow>{session-points}</yellow>"
   kick-line3: "<gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
-  kick-line4: "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/time</yellow><gray> fuer dein Profil."
+  kick-line4: "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/timeleft</yellow><gray> fuer dein Profil."
   warning: "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"
   join-title: "<gradient:#7bed9f:#70a1ff><bold>Willkommen zurueck, {player}!</bold></gradient>"
   join-info: "<gray>Verbleibend: <yellow>{remaining}</yellow> <dark_gray>| <gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
   join-line2: "<gray>Session heute: <yellow>{session-points}</yellow> <dark_gray>| <gray>Kit heute erhalten: <yellow>{kit-given}</yellow>"
-  join-tip: "<gray>Tipp: Nutze jederzeit <yellow>/time</yellow><gray> fuer deine komplette Profiluebersicht."
+  join-tip: "<gray>Tipp: Nutze jederzeit <yellow>/timeleft</yellow><gray> fuer deine komplette Profiluebersicht."
 
 # Ob beim Einloggen die verbleibende Zeit angezeigt wird
 show-on-join: true

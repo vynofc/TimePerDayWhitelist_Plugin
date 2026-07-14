@@ -226,7 +226,7 @@ public class PlayerTimeManager {
                                 + "<yellow>{kit-level}</yellow>"),
                 plugin.getConfig().getString(
                         "messages.kick-line4",
-                        "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/time</yellow><gray> fuer dein Profil.")
+                        "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/timeleft</yellow><gray> fuer dein Profil.")
         ), placeholders);
     }
 
@@ -659,7 +659,7 @@ public class PlayerTimeManager {
                                 + "<yellow>{kit-given}</yellow>"),
                 plugin.getConfig().getString(
                         "messages.join-tip",
-                        "<gray>Tipp: Nutze jederzeit <yellow>/time</yellow><gray> fuer deine komplette Profiluebersicht.")
+                        "<gray>Tipp: Nutze jederzeit <yellow>/timeleft</yellow><gray> fuer deine komplette Profiluebersicht.")
         ), placeholders);
     }
 

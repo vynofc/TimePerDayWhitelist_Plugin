@@ -71,7 +71,7 @@ Die Kick-Nachricht zeigt dabei:
 
 ## 3) Join- und Profilanzeige
 
-Beim normalen Join und via `/time` werden die aktuellen Profilwerte angezeigt:
+Beim normalen Join und via `/timeleft` werden die aktuellen Profilwerte angezeigt:
 
 - bisher gespielte Zeit
 - Session-Punkte

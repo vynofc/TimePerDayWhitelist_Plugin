@@ -12,9 +12,9 @@ commands:
     usage: /admintime <subcommand>
     permission: timeperday.admin
     aliases: [ timeperday, tpd ]
-  time:
+  timeleft:
     description: Zeigt die verbleibende Spielzeit für den Tag an
-    usage: /time
+    usage: /timeleft
     permission: timeperday.use
   debugtime:
     description: Debug-Events manuell auslösen (z. B. Tageswechsel)

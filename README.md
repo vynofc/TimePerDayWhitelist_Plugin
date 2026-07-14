@@ -12,7 +12,7 @@ Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 - Session-Punkte werden beim Tageslimit in Gesamtlevel umgerechnet
 - Gesamtlevel wird persistent gespeichert
 - Level-basierte Spawn-Kits in 10er-Stufen bis Level 150
-- Join-/Kick-/Time-Anzeige als Profiluebersicht inkl. `/time`-Hinweis
+- Join-/Kick-/Time-Anzeige als Profiluebersicht inkl. `/timeleft`-Hinweis
 - Admin-Funktionen für Zeit und Level
 - Ingame-Admin-Kisten-UI für Spielerverwaltung, Limits, Level, Whitelist, Reload und Global-Reset
 - Konfigurierte MiniMessage-Nachrichten werden tatsächlich als formatierte Components gerendert
@@ -60,7 +60,7 @@ Frühe Stufen:
 
 | Befehl | Beschreibung | Permission |
 |---|---|---|
-| `/time` | Zeigt Zeit, Session-Punkte, Gesamtlevel | `timeperday.use` |
+| `/timeleft` | Zeigt Zeit, Session-Punkte, Gesamtlevel | `timeperday.use` |
 | `/admintime info [Spieler]` | Zeit + Progressionswerte anzeigen | `timeperday.admin` |
 | `/admintime set <Spieler> <Minuten>` | Tageslimit setzen | `timeperday.admin` |
 | `/admintime reset` | GLOBAL: setzt aktive Weltzustände und alle Spieler-/Leveldaten zurück | `timeperday.admin` |
