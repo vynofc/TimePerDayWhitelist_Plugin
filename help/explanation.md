@@ -9,8 +9,7 @@ Das Plugin kombiniert weiterhin ein hartes Tageslimit mit einer einfachen Progre
 1. Spieler haben pro Tag ein konfigurierbares Zeitlimit.
 2. Item-Pickups waehrend der aktiven Spielzeit erzeugen Session-Punkte.
 3. Beim Ablauf der Zeit werden Session-Punkte in dauerhaftes Gesamtlevel umgewandelt.
-4. Erfolgreiche Progression-Pickups zeigen kurz eine Action-Bar.
-5. Level-basierte Kits werden einmal pro Tag vergeben.
+4. Level-basierte Kits werden einmal pro Tag vergeben.
 
 ## Aktuell unterstuetzte Daten und Pfade
 
@@ -44,12 +43,10 @@ Ablauf:
 2. Das Material und die Menge werden an `PlayerTimeManager.addSessionPoints(...)` uebergeben.
 3. `readItemLevel(...)` liest den Wert nur aus `progression.items.<ITEM>.level`.
 4. Falls der Wert groesser als 0 ist, wird `sessionPoints` erhoeht.
-5. Der Spieler sieht kurz eine Action-Bar mit dem verdienten Wert.
-
 Wichtige Folge:
 
 - Items, die nur im Inventar liegen und nicht ueber Pickup erfasst werden, erzeugen keine Progression.
-- Nicht konfigurierte Items erzeugen keine Punkte und keine Action-Bar.
+- Nicht konfigurierte Items erzeugen keine Punkte.
 - Whitelist- und Bypass-Spieler erhalten keine Progression.
 
 ## 2) Zeitlimit und Abschluss der Session
@@ -134,6 +131,5 @@ Das Plugin ist jetzt auf ein klares, aktuelles Datenmodell reduziert:
 
 1. keine alten Progressionsschluessel mehr
 2. Progression nur ueber `progression.items.<ITEM>.level`
-3. Action-Bar bei erfolgreichen Progression-Pickups
-4. Session-Abschluss ueber das vorhandene Zeitlimit
-5. dauerhafte Gesamtlevel und tägliche Kits bleiben erhalten
+3. Session-Abschluss ueber das vorhandene Zeitlimit
+4. dauerhafte Gesamtlevel und tägliche Kits bleiben erhalten

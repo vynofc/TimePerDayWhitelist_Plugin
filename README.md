@@ -8,7 +8,6 @@ Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 - Auto-Kick bei Tageslimit
 - Tagesreset über Datumswechsel
 - Item-basierte Session-Punkte mit genau einem `level`-Wert pro Item
-- Fortschrittsrelevante Item-Pickups zeigen kurz eine Action-Bar mit dem verdienten Level
 - Session-Punkte werden beim Tageslimit in Gesamtlevel umgerechnet
 - Gesamtlevel wird persistent gespeichert
 - Level-basierte Spawn-Kits in 10er-Stufen bis Level 150
