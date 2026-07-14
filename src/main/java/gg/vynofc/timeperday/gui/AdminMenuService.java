@@ -357,6 +357,9 @@ public class AdminMenuService {
 
     private void sendPlayerInfo(Player admin, OfflinePlayer target) {
         PlayerTimeSnapshot snapshot = snapshot(target);
+        double progressLevel = target.getPlayer() != null
+                ? timeManager.getProgressLevel(target.getPlayer())
+                : timeManager.getProgressLevel(target.getUniqueId());
         admin.sendMessage(Component.text(
                 "--- Spielzeitinfo: " + displayName(target) + " ---", NamedTextColor.GOLD));
         admin.sendMessage(info("Gespielt heute", PlayerTimeManager.formatTime(snapshot.played())));
@@ -366,16 +369,16 @@ public class AdminMenuService {
                 : PlayerTimeManager.formatTime(snapshot.remaining())));
         admin.sendMessage(info("Session-Punkte", PlayerTimeManager.formatLevel(snapshot.sessionPoints())));
         admin.sendMessage(info("Gesamtlevel", PlayerTimeManager.formatLevel(snapshot.totalLevel())));
-        admin.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(
-                target.getPlayer() != null
-                        ? timeManager.getProgressLevel(target.getPlayer())
-                        : timeManager.getProgressLevel(target.getUniqueId()))));
+        admin.sendMessage(info("Progress-Level", PlayerTimeManager.formatLevel(progressLevel)));
         admin.sendMessage(info("Whitelist (unbegrenzt)", snapshot.whitelisted() ? "Ja" : "Nein"));
     }
 
     private ItemStack buildPlayerSummaryItem(OfflinePlayer target) {
         PlayerTimeSnapshot snapshot = snapshot(target);
         int bestKitLevel = timeManager.getBestKitLevelFor(snapshot.totalLevel());
+        double progressLevel = target.getPlayer() != null
+                ? timeManager.getProgressLevel(target.getPlayer())
+                : timeManager.getProgressLevel(target.getUniqueId());
         return playerHead(target,
                 displayName(target),
                 "Gespielt: " + PlayerTimeManager.formatTime(snapshot.played()),
@@ -384,9 +387,7 @@ public class AdminMenuService {
                         : PlayerTimeManager.formatTime(snapshot.remaining())),
                 "Session: " + PlayerTimeManager.formatLevel(snapshot.sessionPoints()),
                 "Gesamtlevel: " + PlayerTimeManager.formatLevel(snapshot.totalLevel()),
-                "Progress-Level: " + PlayerTimeManager.formatLevel(target.getPlayer() != null
-                        ? timeManager.getProgressLevel(target.getPlayer())
-                        : timeManager.getProgressLevel(target.getUniqueId())),
+                "Progress-Level: " + PlayerTimeManager.formatLevel(progressLevel),
                 "Bestes Kit: " + (bestKitLevel > 0 ? bestKitLevel : "Keins"),
                 "Whitelist: " + (snapshot.whitelisted() ? "Ja" : "Nein")
         );
