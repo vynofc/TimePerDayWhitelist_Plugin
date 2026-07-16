@@ -72,10 +72,10 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
     // Subcommands
     // -------------------------------------------------------------------------
 
-    /** /admintime set <Spieler> <Minuten> */
+    /** /tpdadmin set <Spieler> <Minuten> */
     private void handleSet(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(error("Verwendung: /admintime set <Spieler> <Minuten>"));
+            sender.sendMessage(error("Verwendung: /tpdadmin set <Spieler> <Minuten>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -97,12 +97,12 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** /admintime info [Spieler] */
+    /** /tpdadmin info [Spieler] */
     private void handleInfo(CommandSender sender, String[] args) {
         OfflinePlayer target;
         if (args.length < 2) {
             if (!(sender instanceof Player p)) {
-                sender.sendMessage(error("Verwendung: /admintime info <Spieler>"));
+                sender.sendMessage(error("Verwendung: /tpdadmin info <Spieler>"));
                 return;
             }
             target = p;
@@ -131,10 +131,10 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(info("Whitelist (unbegrenzt)", snapshot.whitelisted() ? "Ja" : "Nein"));
     }
 
-    /** /admintime setlevel <Spieler> <Level> */
+    /** /tpdadmin setlevel <Spieler> <Level> */
     private void handleSetLevel(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(error("Verwendung: /admintime setlevel <Spieler> <Level>"));
+            sender.sendMessage(error("Verwendung: /tpdadmin setlevel <Spieler> <Level>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -153,10 +153,10 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** /admintime addlevel <Spieler> <Level> */
+    /** /tpdadmin addlevel <Spieler> <Level> */
     private void handleAddLevel(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(error("Verwendung: /admintime addlevel <Spieler> <Level>"));
+            sender.sendMessage(error("Verwendung: /tpdadmin addlevel <Spieler> <Level>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -175,12 +175,12 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** /admintime reset */
+    /** /tpdadmin reset */
     private void handleResetAll(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage(error("Verwendung: /admintime reset"));
+            sender.sendMessage(error("Verwendung: /tpdadmin reset"));
             sender.sendMessage(Component.text(
-                    "Für einzelnen Spieler: /admintime resetplayer <Spieler>",
+                    "Für einzelnen Spieler: /tpdadmin resetplayer <Spieler>",
                     NamedTextColor.YELLOW));
             return;
         }
@@ -191,10 +191,10 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
                 NamedTextColor.RED));
     }
 
-    /** /admintime resetplayer <Spieler> */
+    /** /tpdadmin resetplayer <Spieler> */
     private void handleResetPlayer(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(error("Verwendung: /admintime resetplayer <Spieler>"));
+            sender.sendMessage(error("Verwendung: /tpdadmin resetplayer <Spieler>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[1]);
@@ -208,10 +208,10 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
                 .build());
     }
 
-    /** /admintime setdefault <Minuten> */
+    /** /tpdadmin setdefault <Minuten> */
     private void handleSetDefault(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(error("Verwendung: /admintime setdefault <Minuten>"));
+            sender.sendMessage(error("Verwendung: /tpdadmin setdefault <Minuten>"));
             return;
         }
         try {
@@ -226,10 +226,10 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    /** /admintime whitelist <add|remove> <Spieler> */
+    /** /tpdadmin whitelist <add|remove> <Spieler> */
     private void handleWhitelist(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(error("Verwendung: /admintime whitelist <add|remove> <Spieler>"));
+            sender.sendMessage(error("Verwendung: /tpdadmin whitelist <add|remove> <Spieler>"));
             return;
         }
         OfflinePlayer target = resolvePlayer(sender, args[2]);
@@ -249,25 +249,25 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
                         NamedTextColor.GREEN));
             }
             default -> sender.sendMessage(error(
-                    "Verwendung: /admintime whitelist <add|remove> <Spieler>"));
+                    "Verwendung: /tpdadmin whitelist <add|remove> <Spieler>"));
         }
     }
 
-    /** /admintime reload */
+    /** /tpdadmin reload */
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
         timeManager.reload();
         sender.sendMessage(Component.text("Konfiguration neu geladen.", NamedTextColor.GREEN));
     }
 
-    /** /admintime gui */
+    /** /tpdadmin gui */
     private void handleGui(CommandSender sender, String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(error("Die Admin-GUI kann nur von Spielern geöffnet werden."));
             return;
         }
         if (args.length > 1) {
-            sender.sendMessage(error("Verwendung: /admintime gui"));
+            sender.sendMessage(error("Verwendung: /tpdadmin gui"));
             return;
         }
         adminMenuService.openMainMenu(player);
@@ -361,16 +361,16 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(Component.text("=== TimePerDay Befehle ===", NamedTextColor.GOLD));
-        helpLine(sender, "/admintime set <Spieler> <Minuten>",        "Individuelles Tageslimit setzen");
-        helpLine(sender, "/admintime info [Spieler]",                 "Spielzeitinfo anzeigen");
-        helpLine(sender, "/admintime setlevel <Spieler> <Level>",     "Gesamtlevel setzen");
-        helpLine(sender, "/admintime addlevel <Spieler> <Level>",     "Gesamtlevel erhöhen");
-        helpLine(sender, "/admintime reset",                          "GLOBAL: Alles zurücksetzen");
-        helpLine(sender, "/admintime resetplayer <Spieler>",          "Einzelnen Spieler zurücksetzen");
-        helpLine(sender, "/admintime setdefault <Minuten>",           "Standard-Tageslimit setzen");
-        helpLine(sender, "/admintime whitelist <add|remove> <Spieler>", "Whitelist verwalten (unbegrenzt)");
-        helpLine(sender, "/admintime gui",                            "Ingame-Adminoberfläche öffnen");
-        helpLine(sender, "/admintime reload",                         "Konfiguration neu laden");
+        helpLine(sender, "/tpdadmin set <Spieler> <Minuten>",        "Individuelles Tageslimit setzen");
+        helpLine(sender, "/tpdadmin info [Spieler]",                 "Spielzeitinfo anzeigen");
+        helpLine(sender, "/tpdadmin setlevel <Spieler> <Level>",     "Gesamtlevel setzen");
+        helpLine(sender, "/tpdadmin addlevel <Spieler> <Level>",     "Gesamtlevel erhöhen");
+        helpLine(sender, "/tpdadmin reset",                          "GLOBAL: Alles zurücksetzen");
+        helpLine(sender, "/tpdadmin resetplayer <Spieler>",          "Einzelnen Spieler zurücksetzen");
+        helpLine(sender, "/tpdadmin setdefault <Minuten>",           "Standard-Tageslimit setzen");
+        helpLine(sender, "/tpdadmin whitelist <add|remove> <Spieler>", "Whitelist verwalten (unbegrenzt)");
+        helpLine(sender, "/tpdadmin gui",                            "Ingame-Adminoberfläche öffnen");
+        helpLine(sender, "/tpdadmin reload",                         "Konfiguration neu laden");
     }
 
     private void helpLine(CommandSender sender, String cmd, String desc) {

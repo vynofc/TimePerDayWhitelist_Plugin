@@ -63,7 +63,7 @@ class PlayerMessageManager {
                                 + "<yellow>{kit-given}</yellow>"),
                 manager.plugin.getConfig().getString(
                         "messages.join-tip",
-                        "<gray>Tipp: Nutze jederzeit <yellow>/timeleft</yellow><gray> fuer deine komplette Profiluebersicht.")
+                    "<gray>Tipp: Nutze jederzeit <yellow>/tpd time</yellow><gray> fuer deine komplette Profiluebersicht.")
         ), placeholders);
     }
 
@@ -99,7 +99,7 @@ class PlayerMessageManager {
                                 + "<yellow>{kit-level}</yellow>"),
                 manager.plugin.getConfig().getString(
                         "messages.kick-line4",
-                        "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/timeleft</yellow><gray> fuer dein Profil.")
+                    "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/tpd time</yellow><gray> fuer dein Profil.")
         ), placeholders);
     }
 

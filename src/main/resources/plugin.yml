@@ -3,24 +3,26 @@ version: '${project.version}'
 main: fun.vynofc.timeperday.TimePerDayPlugin
 api-version: '1.21'
 description: Begrenzt die tägliche Spielzeit pro Spieler
-authors: [ niliees ]
+authors: [ vynOFC ]
 website: https://vynofc.fun
 folia-supported: true
 
 commands:
-  admintime:
+  tpdadmin:
     description: Verwalte Zeit, Level und globale Resets
-    usage: /admintime <subcommand>
+    usage: /tpdadmin <subcommand>
     permission: timeperday.admin
-    aliases: [ timeperday, tpd ]
-  timeleft:
+    aliases: [ admintime, timeperday ]
+  tpd:
     description: Zeigt die verbleibende Spielzeit für den Tag an
-    usage: /timeleft
+    usage: /tpd time
     permission: timeperday.use
-  debugtime:
+    aliases: [ timeleft ]
+  tpddebug:
     description: Debug-Events manuell auslösen (z. B. Tageswechsel)
-    usage: /debugtime <dayover|warn|timeout>
+    usage: /tpddebug <dayover|warn|timeout>
     permission: timeperday.debug
+    aliases: [ debugtime ]
 
 permissions:
   timeperday.admin:

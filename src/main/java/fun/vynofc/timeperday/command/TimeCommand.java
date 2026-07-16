@@ -33,8 +33,8 @@ public class TimeCommand implements CommandExecutor {
             return true;
         }
 
-        if (args.length > 0) {
-            player.sendMessage(Component.text("Verwendung: /timeleft", NamedTextColor.RED));
+        if (args.length > 1 || (args.length == 1 && !args[0].equalsIgnoreCase("time"))) {
+            player.sendMessage(Component.text("Verwendung: /tpd time", NamedTextColor.RED));
             return true;
         }
 

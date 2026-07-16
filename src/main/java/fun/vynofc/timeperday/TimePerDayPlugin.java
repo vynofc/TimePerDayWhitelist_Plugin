@@ -26,20 +26,20 @@ public class TimePerDayPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new AdminMenuListener(adminMenuService), this);
 
         AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager, adminMenuService);
-        var adminCommand = getCommand("admintime");
+        var adminCommand = getCommand("tpdadmin");
         if (adminCommand != null) {
             adminCommand.setExecutor(adminCmd);
             adminCommand.setTabCompleter(adminCmd);
         }
 
         TimeCommand timeCmd = new TimeCommand(timeManager);
-        var timeCommand = getCommand("timeleft");
+        var timeCommand = getCommand("tpd");
         if (timeCommand != null) {
             timeCommand.setExecutor(timeCmd);
         }
 
         DebugTimeCommand debugCmd = new DebugTimeCommand(timeManager);
-        var debugCommand = getCommand("debugtime");
+        var debugCommand = getCommand("tpddebug");
         if (debugCommand != null) {
             debugCommand.setExecutor(debugCmd);
             debugCommand.setTabCompleter(debugCmd);

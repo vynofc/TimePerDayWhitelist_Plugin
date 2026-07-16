@@ -49,7 +49,7 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
 
     private void handleDayOver(CommandSender sender, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage(error("Verwendung: /debugtime dayover"));
+            sender.sendMessage(error("Verwendung: /tpddebug dayover"));
             return;
         }
 
@@ -60,7 +60,7 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
 
     private void handleWarn(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(error("Verwendung: /debugtime warn <Spieler> <Sekunden>"));
+            sender.sendMessage(error("Verwendung: /tpddebug warn <Spieler> <Sekunden>"));
             return;
         }
 
@@ -90,7 +90,7 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
 
     private void handleTimeout(CommandSender sender, String[] args) {
         if (args.length != 2) {
-            sender.sendMessage(error("Verwendung: /debugtime timeout <Spieler>"));
+            sender.sendMessage(error("Verwendung: /tpddebug timeout <Spieler>"));
             return;
         }
 
@@ -156,9 +156,9 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(Component.text("=== DebugTime Befehle ===", NamedTextColor.GOLD));
-        helpLine(sender, "/debugtime dayover", "Simuliert Mitternacht (Tageswerte reset)");
-        helpLine(sender, "/debugtime warn <Spieler> <Sekunden>", "Sendet manuelle Warnung");
-        helpLine(sender, "/debugtime timeout <Spieler>", "Simuliert Zeitablauf + Kick");
+        helpLine(sender, "/tpddebug dayover", "Simuliert Mitternacht (Tageswerte reset)");
+        helpLine(sender, "/tpddebug warn <Spieler> <Sekunden>", "Sendet manuelle Warnung");
+        helpLine(sender, "/tpddebug timeout <Spieler>", "Simuliert Zeitablauf + Kick");
     }
 
     private void helpLine(CommandSender sender, String cmd, String desc) {
