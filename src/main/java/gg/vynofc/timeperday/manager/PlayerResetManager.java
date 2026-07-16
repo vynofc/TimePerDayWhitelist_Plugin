@@ -82,7 +82,7 @@ class PlayerResetManager {
 
         manager.plugin.getServer().getGlobalRegionScheduler().run(manager.plugin, task -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
-                player.getScheduler().run(manager.plugin, scheduledTask -> resetOnlinePlayerState(player), null);
+                player.getScheduler().run(manager.plugin, scheduledTask -> wipeOnlinePlayerState(player), null);
             }
 
             for (World world : Bukkit.getWorlds()) {
@@ -93,7 +93,10 @@ class PlayerResetManager {
 
     void resetOnlinePlayerState(Player player) {
         manager.progressionManager.finalizeSessionProgress(player);
+        wipeOnlinePlayerState(player);
+    }
 
+    private void wipeOnlinePlayerState(Player player) {
         player.getInventory().clear();
         player.getInventory().setArmorContents(null);
         player.getInventory().setItemInOffHand(new ItemStack(Material.AIR));

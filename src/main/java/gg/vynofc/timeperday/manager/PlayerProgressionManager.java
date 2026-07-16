@@ -67,7 +67,7 @@ class PlayerProgressionManager {
         if (gained > 0.0D) {
             manager.totalLevel.merge(uuid, gained, Double::sum);
         }
-        manager.sessionPoints.put(uuid, 0.0D);
+        manager.sessionPoints.remove(uuid);
         manager.save();
         return gained;
     }
