@@ -12,17 +12,14 @@ commands:
     description: Verwalte Zeit, Level und globale Resets
     usage: /tpdadmin <subcommand>
     permission: timeperday.admin
-    aliases: [ admintime, timeperday ]
   tpd:
     description: Zeigt die verbleibende Spielzeit für den Tag an
     usage: /tpd time
     permission: timeperday.use
-    aliases: [ timeleft ]
   tpddebug:
     description: Debug-Events manuell auslösen (z. B. Tageswechsel)
     usage: /tpddebug <dayover|warn|timeout>
     permission: timeperday.debug
-    aliases: [ debugtime ]
 
 permissions:
   timeperday.admin:
