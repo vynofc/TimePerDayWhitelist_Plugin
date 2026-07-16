@@ -6,7 +6,7 @@
 
     <groupId>gg.vynofc</groupId>
     <artifactId>TimePerDayWhitelist</artifactId>
-    <version>1.1.0-beta5_dev3</version>
+    <version>1.1.0-beta5_dev4</version>
     <packaging>jar</packaging>
 
     <name>TimePerDayWhitelist</name>
