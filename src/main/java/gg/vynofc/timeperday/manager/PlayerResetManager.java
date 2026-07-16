@@ -37,8 +37,8 @@ class PlayerResetManager {
         manager.currentDate = newDate;
         manager.playedToday.clear();
         manager.lastKitClaimDate.clear();
+        manager.pendingDayOverReset.clear();
         manager.plugin.getLogger().info(logMessage);
-        manager.save();
 
         for (UUID uuid : allTrackedUuids) {
             if (onlineAtTrigger.contains(uuid)) {
@@ -49,6 +49,7 @@ class PlayerResetManager {
                 manager.pendingDayOverReset.add(uuid);
             }
         }
+        manager.forceSave();
 
         manager.plugin.getServer().getGlobalRegionScheduler().run(manager.plugin, task -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
@@ -64,6 +65,7 @@ class PlayerResetManager {
                     }, null);
                 } else {
                     manager.sessionPoints.remove(uuid);
+                    manager.markDirty();
                 }
             }
         });
@@ -76,9 +78,10 @@ class PlayerResetManager {
         manager.sessionPoints.clear();
         manager.totalLevel.clear();
         manager.lastKitClaimDate.clear();
+        manager.pendingDayOverReset.clear();
 
         manager.currentDate = LocalDate.now().format(PlayerTimeManager.getDateFormatter());
-        manager.save();
+        manager.forceSave();
 
         manager.plugin.getServer().getGlobalRegionScheduler().run(manager.plugin, task -> {
             for (Player player : Bukkit.getOnlinePlayers()) {

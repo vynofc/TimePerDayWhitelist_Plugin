@@ -3,7 +3,6 @@ package gg.vynofc.timeperday.listener;
 import gg.vynofc.timeperday.TimePerDayPlugin;
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
@@ -17,7 +16,7 @@ public class PlayerListener implements Listener {
         this.timeManager = timeManager;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
         var uuid = player.getUniqueId();

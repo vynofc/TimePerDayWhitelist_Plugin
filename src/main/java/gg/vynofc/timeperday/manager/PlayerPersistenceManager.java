@@ -42,6 +42,7 @@ class PlayerPersistenceManager {
         } else {
             loadLongSection("playtime", manager.playedToday);
             loadDoubleSection("session-points", manager.sessionPoints);
+            loadUuidSetSection("pending-dayover-reset", manager.pendingDayOverReset);
         }
 
         loadLongSection("limits", manager.playerLimits);
@@ -61,6 +62,11 @@ class PlayerPersistenceManager {
         manager.sessionPoints.forEach((uuid, val) -> dataConfig.set("session-points." + uuid, val));
         manager.totalLevel.forEach((uuid, val) -> dataConfig.set("total-level." + uuid, val));
         manager.lastKitClaimDate.forEach((uuid, val) -> dataConfig.set("last-kit-claim-date." + uuid, val));
+        int pendingResetIndex = 0;
+        for (UUID uuid : manager.pendingDayOverReset) {
+            dataConfig.set("pending-dayover-reset." + pendingResetIndex, uuid.toString());
+            pendingResetIndex++;
+        }
 
         try {
             dataConfig.save(manager.dataFile);
@@ -78,6 +84,7 @@ class PlayerPersistenceManager {
         manager.sessionPoints.clear();
         manager.totalLevel.clear();
         manager.lastKitClaimDate.clear();
+        manager.pendingDayOverReset.clear();
         load();
     }
 
@@ -153,6 +160,27 @@ class PlayerPersistenceManager {
                 map.put(UUID.fromString(key), section.getString(key, ""));
             } catch (IllegalArgumentException e) {
                 manager.plugin.getLogger().warning("Ungueltige UUID in playerdata.yml: " + key);
+            }
+        }
+    }
+
+    private void loadUuidSetSection(String path, java.util.Set<UUID> target) {
+        YamlConfiguration dataConfig = manager.dataConfig;
+        if (dataConfig == null || !dataConfig.contains(path)) {
+            return;
+        }
+        var section = dataConfig.getConfigurationSection(path);
+        if (section == null) {
+            return;
+        }
+
+        for (String key : section.getKeys(false)) {
+            String uuidText = section.getString(key, "");
+            try {
+                target.add(UUID.fromString(uuidText));
+            } catch (IllegalArgumentException e) {
+                manager.plugin.getLogger().warning(
+                        "Ungueltige UUID in playerdata.yml (" + path + "." + key + "): " + uuidText);
             }
         }
     }

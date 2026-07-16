@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class AdminTimeCommand implements CommandExecutor, TabCompleter {
@@ -51,7 +52,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        switch (args[0].toLowerCase()) {
+        switch (args[0].toLowerCase(Locale.ROOT)) {
             case "set"        -> handleSet(sender, args);
             case "info"       -> handleInfo(sender, args);
             case "setlevel"   -> handleSetLevel(sender, args);
@@ -234,7 +235,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         OfflinePlayer target = resolvePlayer(sender, args[2]);
         if (target == null) return;
 
-        switch (args[1].toLowerCase()) {
+        switch (args[1].toLowerCase(Locale.ROOT)) {
             case "add" -> {
                 timeManager.setWhitelisted(target.getUniqueId(), true);
                 sender.sendMessage(Component.text(
@@ -290,15 +291,15 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2) {
-            return switch (args[0].toLowerCase()) {
-                case "set", "info", "setlevel", "addlevel", "resetplayer" -> onlinePlayerNames(args[1]);
+            return switch (args[0].toLowerCase(Locale.ROOT)) {
+                case "set", "info", "setlevel", "addlevel", "resetplayer" -> knownPlayerNames(args[1]);
                 case "whitelist"            -> filter(List.of("add", "remove"), args[1]);
                 default                     -> List.of();
             };
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("whitelist")) {
-            return onlinePlayerNames(args[2]);
+            return knownPlayerNames(args[2]);
         }
 
         return List.of();
@@ -341,16 +342,20 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text(value, NamedTextColor.WHITE));
     }
 
-    private List<String> onlinePlayerNames(String prefix) {
-        return Bukkit.getOnlinePlayers().stream()
-                .map(Player::getName)
-                .filter(n -> n.toLowerCase().startsWith(prefix.toLowerCase()))
+    private List<String> knownPlayerNames(String prefix) {
+        String lowerPrefix = prefix.toLowerCase(Locale.ROOT);
+        return Arrays.stream(Bukkit.getOfflinePlayers())
+                .map(OfflinePlayer::getName)
+                .filter(name -> name != null && !name.isBlank())
+                .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(lowerPrefix))
+                .distinct()
                 .collect(Collectors.toList());
     }
 
     private List<String> filter(List<String> list, String prefix) {
+        String lowerPrefix = prefix.toLowerCase(Locale.ROOT);
         return list.stream()
-                .filter(s -> s.toLowerCase().startsWith(prefix.toLowerCase()))
+                .filter(s -> s.toLowerCase(Locale.ROOT).startsWith(lowerPrefix))
                 .collect(Collectors.toList());
     }
 

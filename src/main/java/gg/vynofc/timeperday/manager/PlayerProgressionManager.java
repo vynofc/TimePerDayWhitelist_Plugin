@@ -55,7 +55,7 @@ class PlayerProgressionManager {
         }
 
         manager.lastKitClaimDate.put(uuid, manager.currentDate);
-        manager.save();
+        manager.markDirty();
         return true;
     }
 
@@ -68,14 +68,16 @@ class PlayerProgressionManager {
             manager.totalLevel.merge(uuid, gained, Double::sum);
         }
         manager.sessionPoints.remove(uuid);
-        manager.save();
+        manager.markDirty();
         return gained;
     }
 
     double finalizeSessionProgress(Player player) {
         UUID uuid = player.getUniqueId();
         if (manager.isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
-            manager.sessionPoints.remove(uuid);
+            if (manager.sessionPoints.remove(uuid) != null) {
+                manager.markDirty();
+            }
             return 0.0D;
         }
 

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class AdminMenuService {
@@ -409,7 +410,7 @@ public class AdminMenuService {
                 .filter(player -> player.isOnline() || player.hasPlayedBefore())
                 .sorted(Comparator
                         .comparing(OfflinePlayer::isOnline).reversed()
-                        .thenComparing(player -> displayName(player).toLowerCase()))
+                        .thenComparing(player -> displayName(player).toLowerCase(Locale.ROOT)))
                 .toList();
     }
 

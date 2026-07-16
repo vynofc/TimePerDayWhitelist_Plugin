@@ -96,6 +96,7 @@ Frühe Stufen:
 ## Wichtige Config-Bereiche
 
 - `default-limit-minutes`
+- `reset-timezone`
 - `warnings`
 - `messages.*`
 - `progression.items.*.level`

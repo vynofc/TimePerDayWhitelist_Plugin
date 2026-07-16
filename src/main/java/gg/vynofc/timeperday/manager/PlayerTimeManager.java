@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PlayerTimeManager {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final long AUTO_SAVE_INTERVAL_TICKS = 600L;
 
     final TimePerDayPlugin plugin;
     final PlayerPersistenceManager persistenceManager;
@@ -42,7 +44,9 @@ public class PlayerTimeManager {
 
     volatile long defaultLimitSeconds;
     volatile String currentDate;
+    volatile ZoneId resetZoneId;
     volatile NavigableMap<Integer, Map<org.bukkit.Material, Integer>> spawnKits = new TreeMap<>();
+    volatile boolean dirty = false;
 
     long tickCount = 0;
 
@@ -52,7 +56,8 @@ public class PlayerTimeManager {
     public PlayerTimeManager(TimePerDayPlugin plugin) {
         this.plugin = plugin;
         this.defaultLimitSeconds = plugin.getConfig().getLong("default-limit-minutes", 120L) * 60L;
-        this.currentDate = LocalDate.now().format(DATE_FORMAT);
+        this.resetZoneId = readResetZoneIdFromConfig();
+        this.currentDate = LocalDate.now(resetZoneId).format(DATE_FORMAT);
         this.dataFile = new File(plugin.getDataFolder(), "playerdata.yml");
 
         this.persistenceManager = new PlayerPersistenceManager(this);
@@ -63,15 +68,20 @@ public class PlayerTimeManager {
     }
 
     public synchronized void load() {
+        this.resetZoneId = readResetZoneIdFromConfig();
         persistenceManager.load();
+        tickManager.reloadWarningThresholds();
+        dirty = false;
     }
 
     public synchronized void save() {
-        persistenceManager.save();
+        forceSave();
     }
 
     public void reload() {
+        this.resetZoneId = readResetZoneIdFromConfig();
         persistenceManager.reload();
+        tickManager.reloadWarningThresholds();
     }
 
     public void tickOnlinePlayers() {
@@ -84,7 +94,7 @@ public class PlayerTimeManager {
 
     public void setLimit(UUID uuid, long seconds) {
         playerLimits.put(uuid, seconds);
-        save();
+        markDirty();
     }
 
     public long getPlayedToday(UUID uuid) {
@@ -105,7 +115,7 @@ public class PlayerTimeManager {
 
     public void setTotalLevel(UUID uuid, double level) {
         totalLevel.put(uuid, Math.max(0.0D, level));
-        save();
+        markDirty();
     }
 
     public void addTotalLevel(UUID uuid, double amount) {
@@ -113,7 +123,7 @@ public class PlayerTimeManager {
             return;
         }
         totalLevel.merge(uuid, amount, Double::sum);
-        save();
+        markDirty();
     }
 
     public int getBestKitLevelFor(double level) {
@@ -127,11 +137,11 @@ public class PlayerTimeManager {
     public void resetPlayerTime(UUID uuid) {
         playedToday.remove(uuid);
         sessionPoints.remove(uuid);
-        save();
+        markDirty();
     }
 
     public synchronized void debugTriggerDayOver() {
-        triggerDayOver(LocalDate.now().format(DATE_FORMAT),
+        triggerDayOver(LocalDate.now(resetZoneId).format(DATE_FORMAT),
                 "Debug: Tag vorbei ausgeloest (Tageswerte zurueckgesetzt).");
     }
 
@@ -140,7 +150,11 @@ public class PlayerTimeManager {
     }
 
     public boolean consumePendingDayOverReset(UUID uuid) {
-        return pendingDayOverReset.remove(uuid);
+        boolean consumed = pendingDayOverReset.remove(uuid);
+        if (consumed) {
+            markDirty();
+        }
+        return consumed;
     }
 
     public void applyDayOverReset(Player player) {
@@ -161,7 +175,7 @@ public class PlayerTimeManager {
 
     public void setWhitelisted(UUID uuid, boolean exempt) {
         whitelist.put(uuid, exempt);
-        save();
+        markDirty();
     }
 
     public TimePerDayPlugin getPlugin() {
@@ -223,6 +237,31 @@ public class PlayerTimeManager {
         return DATE_FORMAT;
     }
 
+    ZoneId getResetZoneId() {
+        return resetZoneId;
+    }
+
+    long getAutoSaveIntervalTicks() {
+        return AUTO_SAVE_INTERVAL_TICKS;
+    }
+
+    public void markDirty() {
+        dirty = true;
+    }
+
+    public synchronized void flushIfDirty() {
+        if (!dirty) {
+            return;
+        }
+        persistenceManager.save();
+        dirty = false;
+    }
+
+    public synchronized void forceSave() {
+        persistenceManager.save();
+        dirty = false;
+    }
+
     private PlayerTimeSnapshot createSnapshot(UUID uuid, double sessionPointsValue, boolean bypassPermission) {
         long played = getPlayedToday(uuid);
         long limit = getLimit(uuid);
@@ -265,5 +304,19 @@ public class PlayerTimeManager {
             return m + "m " + s + "s";
         }
         return s + "s";
+    }
+
+    private ZoneId readResetZoneIdFromConfig() {
+        String configuredZone = plugin.getConfig().getString("reset-timezone", "");
+        if (configuredZone == null || configuredZone.isBlank()) {
+            return ZoneId.systemDefault();
+        }
+        try {
+            return ZoneId.of(configuredZone.trim());
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Ungueltige reset-timezone in config.yml: " + configuredZone
+                    + " (Fallback: " + ZoneId.systemDefault() + ")");
+            return ZoneId.systemDefault();
+        }
     }
 }

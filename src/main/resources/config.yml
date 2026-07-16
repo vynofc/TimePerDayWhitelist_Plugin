@@ -6,6 +6,10 @@
 # individuelles Limit).
 default-limit-minutes: 60
 
+# Zeitzone fuer den taeglichen Reset (IANA-Format, z. B. Europe/Berlin).
+# Leer lassen fuer Server-Standardzeitzone.
+reset-timezone: "Europe/Berlin"
+
 # Warn-Nachrichten: bei wie vielen verbleibenden Sekunden
 # wird der Spieler gewarnt?  (Liste von Sekundenwerten)
 warnings:
@@ -52,7 +56,7 @@ progression:
     GOLD_INGOT:
       level: 0.1
     QUARTZ:
-      level: 0.11
+      level: 0.05
     AMETHYST_SHARD:
       level: 0.12
     DIAMOND:
