@@ -33,4 +33,4 @@ permissions:
     default: true
   timeperday.debug:
     description: Zugriff auf Debug-Events für TimePerDay
-    default: op
+    default: false
