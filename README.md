@@ -49,6 +49,11 @@ Voraussetzungen: JDK 21+, Maven
 mvn clean package
 ```
 
+## Dokumentation
+
+- `docs/guides/`: Technische Konzepte und Architekturentscheidungen
+- `docs/testing/test-plan.md`: Vollstaendiger manueller Testplan
+
 ## Progressionslogik
 
 1. Spieler sammelt waehrend der Tagesstunde konfigurierte Items im Inventar oder in der Enderchest.
