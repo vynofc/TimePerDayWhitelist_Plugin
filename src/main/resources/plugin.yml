@@ -1,9 +1,10 @@
-name: TimePerDayWhitelist
+﻿name: TimePerDayWhitelist
 version: '${project.version}'
-main: gg.vynofc.timeperday.TimePerDayPlugin
+main: fun.vynofc.timeperday.TimePerDayPlugin
 api-version: '1.21'
 description: Begrenzt die tägliche Spielzeit pro Spieler
 authors: [ niliees ]
+website: https://vynofc.fun
 folia-supported: true
 
 commands:
@@ -34,3 +35,5 @@ permissions:
   timeperday.debug:
     description: Zugriff auf Debug-Events für TimePerDay
     default: false
+
+

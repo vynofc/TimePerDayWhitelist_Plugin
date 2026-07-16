@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.manager;
+package fun.vynofc.timeperday.manager;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -164,3 +164,4 @@ class PlayerMessageManager {
         return out;
     }
 }
+

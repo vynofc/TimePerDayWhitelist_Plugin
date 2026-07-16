@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.gui;
+package fun.vynofc.timeperday.gui;
 
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -41,3 +41,4 @@ public class AdminMenuHolder implements InventoryHolder {
         return inventory;
     }
 }
+

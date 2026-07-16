@@ -1,8 +1,8 @@
-package gg.vynofc.timeperday.command;
+package fun.vynofc.timeperday.command;
 
-import gg.vynofc.timeperday.TimePerDayPlugin;
-import gg.vynofc.timeperday.gui.AdminMenuService;
-import gg.vynofc.timeperday.manager.PlayerTimeManager;
+import fun.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.gui.AdminMenuService;
+import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -378,3 +378,5 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text(" – " + desc, NamedTextColor.GRAY)));
     }
 }
+
+

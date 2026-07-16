@@ -1,12 +1,12 @@
-package gg.vynofc.timeperday;
+package fun.vynofc.timeperday;
 
-import gg.vynofc.timeperday.command.TimeCommand;
-import gg.vynofc.timeperday.command.AdminTimeCommand;
-import gg.vynofc.timeperday.command.DebugTimeCommand;
-import gg.vynofc.timeperday.gui.AdminMenuListener;
-import gg.vynofc.timeperday.gui.AdminMenuService;
-import gg.vynofc.timeperday.listener.PlayerListener;
-import gg.vynofc.timeperday.manager.PlayerTimeManager;
+import fun.vynofc.timeperday.command.TimeCommand;
+import fun.vynofc.timeperday.command.AdminTimeCommand;
+import fun.vynofc.timeperday.command.DebugTimeCommand;
+import fun.vynofc.timeperday.gui.AdminMenuListener;
+import fun.vynofc.timeperday.gui.AdminMenuService;
+import fun.vynofc.timeperday.listener.PlayerListener;
+import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class TimePerDayPlugin extends JavaPlugin {
@@ -69,3 +69,5 @@ public class TimePerDayPlugin extends JavaPlugin {
         return adminMenuService;
     }
 }
+
+

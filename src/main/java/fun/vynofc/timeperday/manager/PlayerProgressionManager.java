@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.manager;
+package fun.vynofc.timeperday.manager;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -122,3 +122,4 @@ class PlayerProgressionManager {
         return 0.0D;
     }
 }
+

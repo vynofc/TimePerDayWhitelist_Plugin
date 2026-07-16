@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.manager;
+package fun.vynofc.timeperday.manager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -86,3 +86,4 @@ class PlayerTickManager {
         }
     }
 }
+

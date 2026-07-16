@@ -1,7 +1,7 @@
-package gg.vynofc.timeperday.listener;
+package fun.vynofc.timeperday.listener;
 
-import gg.vynofc.timeperday.TimePerDayPlugin;
-import gg.vynofc.timeperday.manager.PlayerTimeManager;
+import fun.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -58,3 +58,5 @@ public class PlayerListener implements Listener {
         }
     }
 }
+
+

@@ -1,8 +1,8 @@
-package gg.vynofc.timeperday.gui;
+package fun.vynofc.timeperday.gui;
 
-import gg.vynofc.timeperday.TimePerDayPlugin;
-import gg.vynofc.timeperday.manager.PlayerTimeSnapshot;
-import gg.vynofc.timeperday.manager.PlayerTimeManager;
+import fun.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.manager.PlayerTimeSnapshot;
+import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -457,3 +457,4 @@ public class AdminMenuService {
                 .append(Component.text(value, NamedTextColor.WHITE));
     }
 }
+

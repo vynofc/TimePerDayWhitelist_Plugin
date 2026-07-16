@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.gui;
+package fun.vynofc.timeperday.gui;
 
 enum MenuType {
     MAIN,
@@ -8,3 +8,4 @@ enum MenuType {
     LEVELS,
     GLOBAL_RESET_CONFIRM
 }
+

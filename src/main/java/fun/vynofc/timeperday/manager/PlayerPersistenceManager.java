@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.manager;
+package fun.vynofc.timeperday.manager;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -226,3 +226,4 @@ class PlayerPersistenceManager {
         return kits;
     }
 }
+

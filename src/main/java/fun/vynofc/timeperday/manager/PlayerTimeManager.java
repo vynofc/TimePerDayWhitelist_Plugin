@@ -1,6 +1,6 @@
-package gg.vynofc.timeperday.manager;
+package fun.vynofc.timeperday.manager;
 
-import gg.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.TimePerDayPlugin;
 import net.kyori.adventure.text.Component;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -320,3 +320,4 @@ public class PlayerTimeManager {
         }
     }
 }
+

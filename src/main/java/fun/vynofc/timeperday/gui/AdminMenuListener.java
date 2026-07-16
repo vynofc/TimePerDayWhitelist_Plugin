@@ -1,4 +1,4 @@
-package gg.vynofc.timeperday.gui;
+package fun.vynofc.timeperday.gui;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -38,3 +38,4 @@ public class AdminMenuListener implements Listener {
         }
     }
 }
+

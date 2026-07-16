@@ -1,6 +1,6 @@
-package gg.vynofc.timeperday.command;
+package fun.vynofc.timeperday.command;
 
-import gg.vynofc.timeperday.manager.PlayerTimeManager;
+import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -166,3 +166,4 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text(" - " + desc, NamedTextColor.GRAY)));
     }
 }
+
