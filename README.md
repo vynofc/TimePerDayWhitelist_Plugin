@@ -16,6 +16,24 @@ Paper/Folia Plugin mit hartem Tageslimit plus Progressionssystem.
 - Ingame-Admin-Kisten-UI für Spielerverwaltung, Limits, Level, Whitelist, Reload und Global-Reset
 - Konfigurierte MiniMessage-Nachrichten werden tatsächlich als formatierte Components gerendert
 
+## Code-Struktur (Manager-Aufteilung)
+
+Die Logik ist in mehrere spezialisierte Manager getrennt, damit Wartung und Erweiterungen einfacher sind:
+
+- `PlayerTimeManager`: Zentrale Fassade und öffentliche API (wird von Commands/Listenern genutzt)
+- `PlayerPersistenceManager`: Laden, Speichern und Reload von `playerdata.yml` und Spawn-Kits
+- `PlayerProgressionManager`: Session-Punkte, Gesamtlevel-Finalisierung und tägliche Kit-Vergabe
+- `PlayerResetManager`: Day-Over-Ablauf, Spieler-/Welt-Reset und Pending-Reset-Verwaltung
+- `PlayerTickManager`: 1-Sekunden-Tick, Warnungen und Timeout-Handling
+- `PlayerMessageManager`: Join/Kick/Warn-Nachrichten inkl. Placeholder-Auflösung
+- `PlayerTimeSnapshot`: Datenstruktur für Zeit-/Progressions-Snapshots
+
+Vorteile der Aufteilung:
+
+- Kleinere, klar abgegrenzte Klassen statt einer großen Sammelklasse
+- Bessere Lesbarkeit und weniger Seiteneffekte pro Änderung
+- Einfacheres Testen einzelner Verantwortlichkeiten
+
 ## Installation
 
 1. JAR in den `plugins/`-Ordner legen.

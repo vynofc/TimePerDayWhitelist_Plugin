@@ -1,8 +1,8 @@
 package gg.vynofc.timeperday.gui;
 
 import gg.vynofc.timeperday.TimePerDayPlugin;
+import gg.vynofc.timeperday.manager.PlayerTimeSnapshot;
 import gg.vynofc.timeperday.manager.PlayerTimeManager;
-import gg.vynofc.timeperday.manager.PlayerTimeManager.PlayerTimeSnapshot;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
