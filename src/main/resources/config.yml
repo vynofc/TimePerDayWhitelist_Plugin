@@ -65,6 +65,8 @@ progression:
       level: 0.22
     NETHERITE_SCRAP:
       level: 0.35
+    EXPERIENCE:
+      level: 0.2
 
   # Kit-System: immer nur das höchste erreichte Kit wird vergeben.
   # Pro Tag nur 1x Kit pro Spieler.
