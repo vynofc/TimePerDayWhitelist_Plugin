@@ -90,10 +90,13 @@ class PlayerProgressionManager {
             return 0.0D;
         }
 
-        return calculateItemPoints(player.getInventory().getStorageContents())
+        double itemPoints =  calculateItemPoints(player.getInventory().getStorageContents())
                 + calculateItemPoints(player.getInventory().getArmorContents())
                 + calculateItemPoints(new ItemStack[]{player.getInventory().getItemInOffHand()})
                 + calculateItemPoints(player.getEnderChest().getContents());
+        double experiencePoints = player.getLevel() * readExperienceLevelFactor();
+        return itemPoints + experiencePoints;
+            
     }
 
     private double calculateItemPoints(ItemStack[] contents) {
@@ -121,5 +124,9 @@ class PlayerProgressionManager {
         }
         return 0.0D;
     }
-}
 
+    private double readExperienceLevelFactor() {
+    return Math.max(0.0D, manager.plugin.getConfig()
+            .getDouble("progression.experience.level-per-level", 0.2D));
+}
+}
