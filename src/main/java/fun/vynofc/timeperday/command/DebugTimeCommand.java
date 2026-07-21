@@ -1,5 +1,6 @@
 package fun.vynofc.timeperday.command;
 
+import fun.vynofc.timeperday.TimePerDayPlugin;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -7,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -20,15 +20,17 @@ import java.util.stream.Collectors;
 public class DebugTimeCommand implements CommandExecutor, TabCompleter {
 
     private final PlayerTimeManager timeManager;
+    private final TimePerDayPlugin plugin;
 
-    public DebugTimeCommand(PlayerTimeManager timeManager) {
+    public DebugTimeCommand(PlayerTimeManager timeManager, TimePerDayPlugin plugin) {
         this.timeManager = timeManager;
+        this.plugin = plugin;
     }
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof ConsoleCommandSender) && !sender.hasPermission("timeperday.debug")) {
+        if (!sender.hasPermission("timeperday.debug")) {
             sender.sendMessage(error("Du hast keine Berechtigung für diesen Befehl."));
             return true;
         }
@@ -38,10 +40,19 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Wenn Subbefehl nicht "allow" ist, prüfe ob tpddebug aktiviert wurde
+        if (args.length > 0 && !args[0].equalsIgnoreCase("allow")) {
+            if (!plugin.getConfig().getBoolean("tpddebug")) {
+            sender.sendMessage(error("Debug-Modus nicht aktiv. Aktiviere ihn zuerst mit /tpddebug allow"));
+            return true;
+            }
+        }
+
         switch (args[0].toLowerCase(Locale.ROOT)) {
             case "dayover" -> handleDayOver(sender, args);
             case "warn" -> handleWarn(sender, args);
             case "timeout" -> handleTimeout(sender, args);
+            case "allow" -> handleAllow(sender);
             default -> sendHelp(sender);
         }
 
@@ -114,6 +125,12 @@ public class DebugTimeCommand implements CommandExecutor, TabCompleter {
             timeManager.debugTriggerTimeout(target), null);
 
         sender.sendMessage(Component.text("Debug-Timeout für " + target.getName() + " ausgelöst.", NamedTextColor.GREEN));
+    }
+
+    private void handleAllow(CommandSender sender) {
+        plugin.getConfig().set("tpddebug", true);
+        plugin.saveConfig();
+        sender.sendMessage(Component.text("Debug-Modus aktiviert!", NamedTextColor.GREEN));
     }
 
     @Override

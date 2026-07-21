@@ -2,6 +2,9 @@
 #  TimePerDayWhitelist - Konfiguration
 # ============================================================
 
+# tpddebug Command Security Warning
+tpddebug: false
+
 # Standard-Tageslimit in Minuten (gilt für alle Spieler ohne
 # individuelles Limit).
 default-limit-minutes: 60

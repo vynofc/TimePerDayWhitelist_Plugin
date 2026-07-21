@@ -38,7 +38,7 @@ public class TimePerDayPlugin extends JavaPlugin {
             timeCommand.setExecutor(timeCmd);
         }
 
-        DebugTimeCommand debugCmd = new DebugTimeCommand(timeManager);
+        DebugTimeCommand debugCmd = new DebugTimeCommand(timeManager, this);
         var debugCommand = getCommand("tpddebug");
         if (debugCommand != null) {
             debugCommand.setExecutor(debugCmd);
