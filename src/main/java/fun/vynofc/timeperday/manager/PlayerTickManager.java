@@ -1,6 +1,8 @@
 package fun.vynofc.timeperday.manager;
 
 import org.bukkit.Bukkit;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 
 import java.time.LocalDate;
@@ -62,6 +64,25 @@ class PlayerTickManager {
         manager.messageManager.sendWarning(player, Math.max(0L, remainingSeconds));
     }
 
+    private Component buildActionBarMessage(long remainingSeconds) {
+        long safeRemaining = Math.max(0L, remainingSeconds);
+        long h = safeRemaining / 3600;
+        long m = (safeRemaining % 3600) / 60;
+        long s = safeRemaining % 60;
+
+        String timeText;
+        if (h > 0) {
+            timeText = h + "h " + m + "m " + s + "s";
+        } else if (m > 0) {
+            timeText = m + "m " + s + "s";
+        } else {
+            timeText = s + "s";
+        }
+
+        return Component.text("Verbleibend: ", NamedTextColor.GRAY)
+                .append(Component.text(timeText, NamedTextColor.GREEN));
+    }
+
     private void tickPlayer(Player player) {
         if (!player.isOnline()) {
             return;
@@ -75,6 +96,10 @@ class PlayerTickManager {
         long played = manager.playedToday.merge(uuid, 1L, Long::sum);
         long limit = manager.getLimit(uuid);
         long remaining = limit - played;
+
+        if (manager.isShowActionBarEnabled(uuid)) {
+            player.sendActionBar(buildActionBarMessage(remaining));
+        }
 
         if (warningThresholds.contains(remaining)) {
             manager.messageManager.sendWarning(player, remaining);

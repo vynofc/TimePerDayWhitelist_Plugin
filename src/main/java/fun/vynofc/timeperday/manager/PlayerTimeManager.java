@@ -39,6 +39,7 @@ public class PlayerTimeManager {
     final ConcurrentHashMap<UUID, Double> sessionPoints = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, Double> totalLevel = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, String> lastKitClaimDate = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<UUID, Boolean> showActionBar = new ConcurrentHashMap<>();
 
     final java.util.Set<UUID> pendingDayOverReset = ConcurrentHashMap.newKeySet();
 
@@ -175,6 +176,15 @@ public class PlayerTimeManager {
 
     public void setWhitelisted(UUID uuid, boolean exempt) {
         whitelist.put(uuid, exempt);
+        markDirty();
+    }
+
+    public boolean isShowActionBarEnabled(UUID uuid) {
+        return showActionBar.getOrDefault(uuid, false);
+    }
+
+    public void setShowActionBar(UUID uuid, boolean enabled) {
+        showActionBar.put(uuid, enabled);
         markDirty();
     }
 

@@ -12,6 +12,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class UserSettingsMenuService {
 
@@ -22,12 +23,19 @@ public class UserSettingsMenuService {
     }
 
     public void openSettings(Player player) {
-        UserSettingsHolder holder = new UserSettingsHolder(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+        UserSettingsHolder holder = new UserSettingsHolder(uuid);
         Inventory inventory = createInventory(holder, 27, "Einstellungen");
 
-        inventory.setItem(11, placeholderItem(Material.NOTE_BLOCK,
-                "Einstellung 1",
-                "Diese Einstellung wird in einem zukuenftigen Update verfuegbar sein."));
+        boolean actionBarEnabled = timeManager.isShowActionBarEnabled(uuid);
+        inventory.setItem(11, toggleItem(
+                Material.CLOCK,
+                "Verbleibende Zeit in Action-Bar",
+                actionBarEnabled,
+                "Zeigt die verbleibende Spielzeit live in der Action-Bar an.",
+                actionBarEnabled ? "Aktuell: Aktiviert" : "Aktuell: Deaktiviert",
+                "Klicke zum Umschalten."));
+
         inventory.setItem(13, placeholderItem(Material.BELL,
                 "Einstellung 2",
                 "Diese Einstellung wird in einem zukuenftigen Update verfuegbar sein."));
@@ -49,7 +57,17 @@ public class UserSettingsMenuService {
         }
 
         switch (slot) {
-            case 11, 13, 15 -> {
+            case 11 -> {
+                UUID uuid = player.getUniqueId();
+                boolean newState = !timeManager.isShowActionBarEnabled(uuid);
+                timeManager.setShowActionBar(uuid, newState);
+                player.sendMessage(Component.text()
+                        .append(Component.text("Action-Bar-Anzeige ", NamedTextColor.GREEN))
+                        .append(Component.text(newState ? "aktiviert." : "deaktiviert.", NamedTextColor.YELLOW))
+                        .build());
+                openSettings(player);
+            }
+            case 13, 15 -> {
                 player.sendMessage(Component.text(
                         "Diese Einstellung ist noch nicht verfuegbar.",
                         NamedTextColor.YELLOW));
@@ -70,6 +88,15 @@ public class UserSettingsMenuService {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text(name, NamedTextColor.GOLD));
+        meta.lore(buildLore(loreLines));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack toggleItem(Material material, String name, boolean enabled, String... loreLines) {
+        ItemStack item = new ItemStack(enabled ? Material.LIME_DYE : Material.GRAY_DYE);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(name, enabled ? NamedTextColor.GREEN : NamedTextColor.RED));
         meta.lore(buildLore(loreLines));
         item.setItemMeta(meta);
         return item;

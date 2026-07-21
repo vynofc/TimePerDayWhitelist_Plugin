@@ -49,6 +49,7 @@ class PlayerPersistenceManager {
         loadBooleanSection("whitelist", manager.whitelist);
         loadDoubleSection("total-level", manager.totalLevel);
         loadStringSection("last-kit-claim-date", manager.lastKitClaimDate);
+        loadBooleanSection("show-action-bar", manager.showActionBar);
         manager.spawnKits = readSpawnKits();
     }
 
@@ -62,6 +63,7 @@ class PlayerPersistenceManager {
         manager.sessionPoints.forEach((uuid, val) -> dataConfig.set("session-points." + uuid, val));
         manager.totalLevel.forEach((uuid, val) -> dataConfig.set("total-level." + uuid, val));
         manager.lastKitClaimDate.forEach((uuid, val) -> dataConfig.set("last-kit-claim-date." + uuid, val));
+        manager.showActionBar.forEach((uuid, val) -> dataConfig.set("show-action-bar." + uuid, val));
         int pendingResetIndex = 0;
         for (UUID uuid : manager.pendingDayOverReset) {
             dataConfig.set("pending-dayover-reset." + pendingResetIndex, uuid.toString());
@@ -84,6 +86,7 @@ class PlayerPersistenceManager {
         manager.sessionPoints.clear();
         manager.totalLevel.clear();
         manager.lastKitClaimDate.clear();
+        manager.showActionBar.clear();
         manager.pendingDayOverReset.clear();
         load();
     }
