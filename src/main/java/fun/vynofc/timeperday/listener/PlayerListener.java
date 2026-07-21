@@ -19,6 +19,9 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
+
+        timeManager.handlePlayerJoinWorldCheck(player);
+
         var uuid = player.getUniqueId();
 
         // Whitelisted oder Bypass-Permission → keine Aktion

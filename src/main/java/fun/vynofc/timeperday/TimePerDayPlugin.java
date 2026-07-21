@@ -61,6 +61,7 @@ public class TimePerDayPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (timeManager != null) {
+            timeManager.onDisable();
             timeManager.save();
         }
         getLogger().info("TimePerDayWhitelist deaktiviert.");

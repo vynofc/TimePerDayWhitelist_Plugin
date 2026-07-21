@@ -38,6 +38,7 @@ class PlayerResetManager {
         manager.playedToday.clear();
         manager.lastKitClaimDate.clear();
         manager.pendingDayOverReset.clear();
+        manager.worldRegenerationManager.onDayOver();
         manager.plugin.getLogger().info(logMessage);
 
         for (UUID uuid : allTrackedUuids) {

@@ -32,6 +32,7 @@ public class PlayerTimeManager {
     final PlayerResetManager resetManager;
     final PlayerTickManager tickManager;
     final PlayerMessageManager messageManager;
+    final WorldRegenerationManager worldRegenerationManager;
 
     final ConcurrentHashMap<UUID, Long> playedToday = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, Long> playerLimits = new ConcurrentHashMap<>();
@@ -66,12 +67,14 @@ public class PlayerTimeManager {
         this.resetManager = new PlayerResetManager(this);
         this.tickManager = new PlayerTickManager(this);
         this.messageManager = new PlayerMessageManager(this);
+        this.worldRegenerationManager = new WorldRegenerationManager(this);
     }
 
     public synchronized void load() {
         this.resetZoneId = readResetZoneIdFromConfig();
         persistenceManager.load();
         tickManager.reloadWarningThresholds();
+        worldRegenerationManager.load();
         dirty = false;
     }
 
@@ -83,6 +86,7 @@ public class PlayerTimeManager {
         this.resetZoneId = readResetZoneIdFromConfig();
         persistenceManager.reload();
         tickManager.reloadWarningThresholds();
+        worldRegenerationManager.reload();
     }
 
     public void tickOnlinePlayers() {
@@ -270,6 +274,14 @@ public class PlayerTimeManager {
     public synchronized void forceSave() {
         persistenceManager.save();
         dirty = false;
+    }
+
+    public void onDisable() {
+        worldRegenerationManager.onDisable();
+    }
+
+    public void handlePlayerJoinWorldCheck(Player player) {
+        worldRegenerationManager.handlePlayerJoin(player);
     }
 
     private PlayerTimeSnapshot createSnapshot(UUID uuid, double sessionPointsValue, boolean bypassPermission) {

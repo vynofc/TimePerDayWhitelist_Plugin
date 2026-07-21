@@ -20,6 +20,19 @@ warnings:
   - 60    # 1 Minute
   - 30    # 30 Sekunden
   - 10    # 10 Sekunden
+  
+# ============================================================
+#  World Regeneration (taeglicher Welt-Reset beim Tageswechsel)
+# ============================================================
+# Erstellt jeden Tag 30 Minuten vor Mitternacht eine neue Welt,
+# laesst Chunky eine 500x500 Region (16 Chunk-Radius) vor-
+# generieren und schaltet um Mitternacht auf die neue Welt um.
+# 30 Minuten danach wird die alte Welt geloescht.
+world-regeneration:
+  enabled: false
+  world-name-prefix: "world_"
+  chunk-radius: 16
+  chunky-quiet-ms: 500
 
 # Nachrichten (unterstützt MiniMessage-Format)
 messages:
@@ -241,3 +254,4 @@ progression:
       GOLDEN_APPLE: 4
       ENCHANTED_GOLDEN_APPLE: 1
       COOKED_BEEF: 24
+
