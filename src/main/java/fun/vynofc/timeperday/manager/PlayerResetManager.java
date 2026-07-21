@@ -23,6 +23,14 @@ class PlayerResetManager {
     }
 
     void triggerDayOver(String newDate, String logMessage) {
+        performDayOverLogic(newDate, logMessage, false);
+    }
+
+    void triggerDebugDayOver(String newDate, String logMessage) {
+        performDayOverLogic(newDate, logMessage, true);
+    }
+
+    private void performDayOverLogic(String newDate, String logMessage, boolean isDebug) {
         Set<UUID> allTrackedUuids = new HashSet<>(manager.playedToday.keySet());
         allTrackedUuids.addAll(manager.sessionPoints.keySet());
         allTrackedUuids.addAll(manager.lastKitClaimDate.keySet());
@@ -38,7 +46,11 @@ class PlayerResetManager {
         manager.playedToday.clear();
         manager.lastKitClaimDate.clear();
         manager.pendingDayOverReset.clear();
-        manager.worldRegenerationManager.onDayOver();
+        if (isDebug) {
+            manager.worldRegenerationManager.debugDayOver();
+        } else {
+            manager.worldRegenerationManager.onDayOver();
+        }
         manager.plugin.getLogger().info(logMessage);
 
         for (UUID uuid : allTrackedUuids) {

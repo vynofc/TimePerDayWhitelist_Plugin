@@ -1,6 +1,8 @@
 package fun.vynofc.timeperday.manager;
 
 import org.bukkit.Bukkit;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
@@ -14,6 +16,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Properties;
 
 class WorldRegenerationManager {
@@ -141,6 +144,67 @@ class WorldRegenerationManager {
         newWorldName = null;
 
         scheduleOldWorldDeletion();
+    }
+
+    void debugDayOver() {
+        if (!enabled) {
+            return;
+        }
+
+        cancelChunkyIfRunning();
+
+        for (Player player : List.copyOf(Bukkit.getOnlinePlayers())) {
+            player.kick(Component.text("Debug-Tageswechsel: Welt wird neu generiert.", NamedTextColor.YELLOW));
+        }
+
+        String dateStr = LocalDate.now(manager.resetZoneId).format(DATE_FORMAT);
+        String worldName = worldNamePrefix + dateStr;
+
+        WorldCreator creator = new WorldCreator(worldName);
+        creator.environment(World.Environment.NORMAL);
+        creator.type(WorldType.NORMAL);
+        creator.generateStructures(true);
+        World createdWorld = creator.createWorld();
+
+        if (createdWorld == null) {
+            manager.plugin.getLogger().warning("WorldRegeneration: Konnte neue Debug-Welt '"
+                    + worldName + "' nicht erstellen.");
+            return;
+        }
+
+        manager.plugin.getLogger().info("WorldRegeneration: Neue Debug-Welt '" + worldName + "' erstellt.");
+
+        World defaultWorld = Bukkit.getWorlds().get(0);
+        String oldName = defaultWorld != null ? defaultWorld.getName() : null;
+
+        updateServerPropertiesLevelName(worldName);
+
+        if (oldName != null) {
+            deleteOldWorldImmediately(oldName);
+        }
+
+        newWorld = null;
+        newWorldName = null;
+    }
+
+    private void deleteOldWorldImmediately(String worldName) {
+        World oldWorld = Bukkit.getWorld(worldName);
+        if (oldWorld != null) {
+            for (Player player : oldWorld.getPlayers()) {
+                World targetWorld = Bukkit.getWorlds().get(0);
+                player.teleport(targetWorld.getSpawnLocation());
+            }
+
+            boolean unloaded = Bukkit.unloadWorld(oldWorld, false);
+            if (!unloaded) {
+                manager.plugin.getLogger().warning(
+                        "WorldRegeneration: Konnte alte Welt '" + worldName + "' nicht entladen.");
+                return;
+            }
+        }
+
+        deleteWorldFolder(worldName);
+        manager.plugin.getLogger().info("WorldRegeneration: Alte Welt '" + worldName + "' geloescht.");
     }
 
     private void updateServerPropertiesLevelName(String levelName) {

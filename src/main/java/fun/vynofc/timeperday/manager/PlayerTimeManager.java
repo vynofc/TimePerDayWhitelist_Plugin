@@ -146,7 +146,7 @@ public class PlayerTimeManager {
     }
 
     public synchronized void debugTriggerDayOver() {
-        triggerDayOver(LocalDate.now(resetZoneId).format(DATE_FORMAT),
+        resetManager.triggerDebugDayOver(LocalDate.now(resetZoneId).format(DATE_FORMAT),
                 "Debug: Tag vorbei ausgeloest (Tageswerte zurueckgesetzt).");
     }
 
