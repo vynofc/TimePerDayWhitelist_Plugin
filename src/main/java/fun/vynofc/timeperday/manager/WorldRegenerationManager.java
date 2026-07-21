@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 class WorldRegenerationManager {
 
@@ -158,7 +159,7 @@ class WorldRegenerationManager {
         }
 
         String dateStr = LocalDate.now(manager.resetZoneId).format(DATE_FORMAT);
-        String worldName = worldNamePrefix + dateStr;
+        String worldName = worldNamePrefix + dateStr + "_" + UUID.randomUUID().toString().substring(0, 8);
 
         WorldCreator creator = new WorldCreator(worldName);
         creator.environment(World.Environment.NORMAL);
