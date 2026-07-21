@@ -173,38 +173,10 @@ class WorldRegenerationManager {
         }
 
         manager.plugin.getLogger().info("WorldRegeneration: Neue Debug-Welt '" + worldName + "' erstellt.");
-
-        World defaultWorld = Bukkit.getWorlds().get(0);
-        String oldName = defaultWorld != null ? defaultWorld.getName() : null;
-
         updateServerPropertiesLevelName(worldName);
-
-        if (oldName != null) {
-            deleteOldWorldImmediately(oldName);
-        }
 
         newWorld = null;
         newWorldName = null;
-    }
-
-    private void deleteOldWorldImmediately(String worldName) {
-        World oldWorld = Bukkit.getWorld(worldName);
-        if (oldWorld != null) {
-            for (Player player : oldWorld.getPlayers()) {
-                World targetWorld = Bukkit.getWorlds().get(0);
-                player.teleport(targetWorld.getSpawnLocation());
-            }
-
-            boolean unloaded = Bukkit.unloadWorld(oldWorld, false);
-            if (!unloaded) {
-                manager.plugin.getLogger().warning(
-                        "WorldRegeneration: Konnte alte Welt '" + worldName + "' nicht entladen.");
-                return;
-            }
-        }
-
-        deleteWorldFolder(worldName);
-        manager.plugin.getLogger().info("WorldRegeneration: Alte Welt '" + worldName + "' geloescht.");
     }
 
     private void updateServerPropertiesLevelName(String levelName) {
