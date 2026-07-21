@@ -1,5 +1,6 @@
 package fun.vynofc.timeperday.command;
 
+import fun.vynofc.timeperday.gui.UserSettingsMenuService;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -12,9 +13,12 @@ import org.jetbrains.annotations.NotNull;
 public class TimeCommand implements CommandExecutor {
 
     private final PlayerTimeManager timeManager;
+    private final UserSettingsMenuService userSettingsMenuService;
 
-    public TimeCommand(PlayerTimeManager timeManager) {
+    public TimeCommand(PlayerTimeManager timeManager,
+                       UserSettingsMenuService userSettingsMenuService) {
         this.timeManager = timeManager;
+        this.userSettingsMenuService = userSettingsMenuService;
     }
 
     @Override
@@ -33,11 +37,26 @@ public class TimeCommand implements CommandExecutor {
             return true;
         }
 
-        if (args.length > 1 || (args.length == 1 && !args[0].equalsIgnoreCase("time"))) {
-            player.sendMessage(Component.text("Verwendung: /tpd time", NamedTextColor.RED));
+        if (args.length == 0) {
+            showTimeInfo(player);
             return true;
         }
 
+        if (args.length == 1 && args[0].equalsIgnoreCase("settings")) {
+            userSettingsMenuService.openSettings(player);
+            return true;
+        }
+
+        if (args.length == 1 && args[0].equalsIgnoreCase("time")) {
+            showTimeInfo(player);
+            return true;
+        }
+
+        player.sendMessage(Component.text("Verwendung: /tpd [time|settings]", NamedTextColor.RED));
+        return true;
+    }
+
+    private void showTimeInfo(Player player) {
         var snapshot = timeManager.getSnapshot(player);
         int bestKitLevel = timeManager.getBestKitLevelFor(snapshot.totalLevel());
 
@@ -55,7 +74,6 @@ public class TimeCommand implements CommandExecutor {
             player.sendMessage(info("Verbleibend", PlayerTimeManager.formatTime(snapshot.remaining())));
         }
 
-        return true;
     }
 
     private Component info(String label, String value) {

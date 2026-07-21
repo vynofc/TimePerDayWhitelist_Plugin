@@ -5,6 +5,8 @@ import fun.vynofc.timeperday.command.AdminTimeCommand;
 import fun.vynofc.timeperday.command.DebugTimeCommand;
 import fun.vynofc.timeperday.gui.AdminMenuListener;
 import fun.vynofc.timeperday.gui.AdminMenuService;
+import fun.vynofc.timeperday.gui.UserSettingsMenuListener;
+import fun.vynofc.timeperday.gui.UserSettingsMenuService;
 import fun.vynofc.timeperday.listener.PlayerListener;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -13,6 +15,7 @@ public class TimePerDayPlugin extends JavaPlugin {
 
     private PlayerTimeManager timeManager;
     private AdminMenuService adminMenuService;
+    private UserSettingsMenuService userSettingsMenuService;
 
     @Override
     public void onEnable() {
@@ -21,9 +24,11 @@ public class TimePerDayPlugin extends JavaPlugin {
         timeManager = new PlayerTimeManager(this);
         timeManager.load();
         adminMenuService = new AdminMenuService(this, timeManager);
+        userSettingsMenuService = new UserSettingsMenuService(timeManager);
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager), this);
         getServer().getPluginManager().registerEvents(new AdminMenuListener(adminMenuService), this);
+        getServer().getPluginManager().registerEvents(new UserSettingsMenuListener(userSettingsMenuService), this);
 
         AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager, adminMenuService);
         var adminCommand = getCommand("tpdadmin");
@@ -32,7 +37,7 @@ public class TimePerDayPlugin extends JavaPlugin {
             adminCommand.setTabCompleter(adminCmd);
         }
 
-        TimeCommand timeCmd = new TimeCommand(timeManager);
+        TimeCommand timeCmd = new TimeCommand(timeManager, userSettingsMenuService);
         var timeCommand = getCommand("tpd");
         if (timeCommand != null) {
             timeCommand.setExecutor(timeCmd);
@@ -67,6 +72,10 @@ public class TimePerDayPlugin extends JavaPlugin {
 
     public AdminMenuService getAdminMenuService() {
         return adminMenuService;
+    }
+
+    public UserSettingsMenuService getUserSettingsMenuService() {
+        return userSettingsMenuService;
     }
 }
 

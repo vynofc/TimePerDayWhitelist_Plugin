@@ -30,9 +30,9 @@ mvn clean package        # or ./build.sh / build.bat (Windows)
 `TimePerDayPlugin` (main class, `onEnable`/`onDisable`) wires everything together:
 - Creates one `PlayerTimeManager` (central facade) and one `AdminMenuService`.
 - Registers `PlayerListener` and `AdminMenuListener` as Bukkit event listeners.
-- Registers commands `tpdadmin`, `tpd`, `tpddebug` (see `plugin.yml` — note the internal command
-  names differ from the user-facing `/admintime`, `/timeleft`, `/debugtime` names documented in
-  README; the README aliases likely come from command labels/usage strings, not `getCommand()` keys).
+- Registers commands `tpdadmin`, `tpd`, `tpddebug` (see `plugin.yml`).
+- `DebugTimeCommand` now takes both `PlayerTimeManager` and `TimePerDayPlugin` — the plugin
+  reference is needed for the `tpddebug` config gate (see Debug Command Gate section below).
 - Runs a **global** fixed-rate scheduler tick (1s, `getGlobalRegionScheduler().runAtFixedRate`) that
   calls `timeManager.tickOnlinePlayers()`. Because this is Folia-compatible, per-player actions
   triggered from the global tick must be delegated to the player's own region scheduler — don't do
@@ -58,7 +58,7 @@ one) rather than growing `PlayerTimeManager` itself — it's intentionally kept 
 Other packages:
 - `gui/` — `AdminMenuService` builds inventory-based admin menus (`AdminMenuHolder`, `MenuType`),
   `AdminMenuListener` handles clicks.
-- `command/` — `TimeCommand`, `AdminTimeCommand`, `DebugTimeCommand`.
+- `command/` — `TimeCommand`, `AdminTimeCommand`, `DebugTimeCommand` (with `tpddebug` config gate).
 - `listener/` — `PlayerListener` (join/quit/kick hooks).
 
 ## Key Conventions & Gotchas
@@ -105,9 +105,23 @@ Other packages:
 - `docs/testing/test-plan.md` — manual test plan; run through relevant sections after changes since
   there's no automated test suite.
 
+## Debug Command Gate (`tpddebug`)
+
+The `DebugTimeCommand` (`/tpddebug`) has a two-step activation model:
+
+- Permission `timeperday.debug` (default `op`) is required to use the command at all.
+- Even with permission, all destructive subcommands (`dayover`, `warn`, `timeout`) are blocked until
+  an op/console runs `/tpddebug allow`, which sets `config.yml` key `tpddebug` to `true`.
+  The `tpddebug` config key defaults to `false` and is persisted via `saveConfig()`.
+- The `DebugTimeCommand` constructor now takes both `PlayerTimeManager` and `TimePerDayPlugin`
+  (the plugin reference is needed for `getConfig()`/`saveConfig()`).
+- The `allow` subcommand is not shown in tab completion; it is a hidden bootstrap command.
+
+This prevents accidental debug-triggering even by ops — the gate must be explicitly toggled on first.
+
 ## Versioning
 
 Version lives in `pom.xml` (`<version>`) and is injected into `plugin.yml` via resource filtering.
-Current scheme uses `-beta#N` suffixes (e.g. `1.2.0-beta#2`). Built jars are archived under
+Current scheme uses `-beta#N` suffixes (e.g. `1.2.0-beta#4`). Built jars are archived under
 `.archiv/<major.minor>/` (and `.archiv/<major.minor>/beta/` for betas) — this is a manual archive, not
 part of the build process.

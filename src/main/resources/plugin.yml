@@ -13,8 +13,8 @@ commands:
     usage: /tpdadmin <subcommand>
     permission: timeperday.admin
   tpd:
-    description: Zeigt die verbleibende Spielzeit für den Tag an
-    usage: /tpd time
+    description: Zeigt die verbleibende Spielzeit und Einstellungen an
+    usage: /tpd [time|settings]
     permission: timeperday.use
   tpddebug:
     description: Debug-Events manuell auslösen (z. B. Tageswechsel)
