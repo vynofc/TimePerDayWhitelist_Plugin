@@ -15,7 +15,6 @@ import fun.vynofc.timeperday.gui.UserSettingsMenuListener;
 import fun.vynofc.timeperday.gui.UserSettingsMenuService;
 import fun.vynofc.timeperday.listener.PlayerListener;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -73,9 +72,10 @@ public class TimePerDayPlugin extends JavaPlugin {
         getServer().getGlobalRegionScheduler().runAtFixedRate(this,
                 task -> timeManager.tickOnlinePlayers(), 1L, 20L);
 
-        BorderCheckTask borderCheckTask = new BorderCheckTask(borderManager);
+        BorderCheckTask borderCheckTask = new BorderCheckTask(borderManager, this);
+        long checkInterval = borderManager.getCheckInterval();
         getServer().getGlobalRegionScheduler().runAtFixedRate(this,
-                task -> borderCheckTask.run(), 1L, 20L);
+                task -> borderCheckTask.run(), 1L, checkInterval);
 
         startBorderVisualizer();
 
@@ -87,6 +87,9 @@ public class TimePerDayPlugin extends JavaPlugin {
         if (timeManager != null) {
             timeManager.onDisable();
             timeManager.save();
+        }
+        if (borderManager != null) {
+            borderManager.forceSave();
         }
         getLogger().info("TimePerDayWhitelist deaktiviert.");
     }
@@ -119,15 +122,17 @@ public class TimePerDayPlugin extends JavaPlugin {
             tick.incrementAndGet();
             final double offsetPercent = (tick.longValue() % 20) / 20d;
             for (final org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
-                final World world = player.getWorld();
-                final BorderData border = borderManager.getBorder(world.getName());
-                if (border == null) {
-                    continue;
-                }
-                final List<Location> particleLocations = Particles.at(player, border, offsetPercent);
-                for (final Location location : particleLocations) {
-                    player.spawnParticle(Particle.DUST, location, 1, dustOptions);
-                }
+                player.getScheduler().run(this, pt -> {
+                    final World world = player.getWorld();
+                    final BorderData border = borderManager.getBorder(world.getName());
+                    if (border == null) {
+                        return;
+                    }
+                    final List<Location> particleLocations = Particles.at(player, border, offsetPercent);
+                    for (final Location location : particleLocations) {
+                        player.spawnParticle(Particle.DUST, location, 1, dustOptions);
+                    }
+                }, null);
             }
         }, 1L, 1L);
     }

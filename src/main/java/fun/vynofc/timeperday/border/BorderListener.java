@@ -44,11 +44,15 @@ public class BorderListener implements Listener {
         }
 
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
-            event.setCancelled(true);
+            if (borderManager.preventEnderpearl()) {
+                event.setCancelled(true);
+            }
             return;
         }
         if (event.getCause() == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT) {
-            event.setCancelled(true);
+            if (borderManager.preventChorusFruit()) {
+                event.setCancelled(true);
+            }
             return;
         }
 
@@ -61,6 +65,9 @@ public class BorderListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (!borderManager.preventMobSpawns()) {
+            return;
+        }
         String worldName = event.getEntity().getWorld().getName();
         BorderData border = borderManager.getBorder(worldName);
         if (border == null) {

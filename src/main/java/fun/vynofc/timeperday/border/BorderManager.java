@@ -2,8 +2,6 @@ package fun.vynofc.timeperday.border;
 
 import fun.vynofc.timeperday.TimePerDayPlugin;
 import fun.vynofc.timeperday.border.util.BorderColor;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -25,9 +23,15 @@ public class BorderManager {
     private boolean useActionBar;
     private String effect;
     private String sound;
+    private boolean preventMobSpawns;
+    private boolean preventEnderpearl;
+    private boolean preventChorusFruit;
     private boolean visualizerEnabled;
     private int visualizerRange;
     private String visualizerColor;
+    private long checkInterval;
+
+    private boolean dirty;
 
     public BorderManager(TimePerDayPlugin plugin) {
         this.plugin = plugin;
@@ -75,9 +79,13 @@ public class BorderManager {
         useActionBar = plugin.getConfig().getBoolean("border-options.use-action-bar", true);
         effect = plugin.getConfig().getString("border-options.effect", "ender_signal");
         sound = plugin.getConfig().getString("border-options.sound", "entity_enderman_teleport");
+        preventMobSpawns = plugin.getConfig().getBoolean("border-options.prevent-mob-spawns", false);
+        preventEnderpearl = plugin.getConfig().getBoolean("border-options.prevent-enderpearl", false);
+        preventChorusFruit = plugin.getConfig().getBoolean("border-options.prevent-chorus-fruit", false);
         visualizerEnabled = plugin.getConfig().getBoolean("border-options.visualizer-enabled", true);
         visualizerRange = plugin.getConfig().getInt("border-options.visualizer-range", 8);
         visualizerColor = plugin.getConfig().getString("border-options.visualizer-color", "20A0FF");
+        checkInterval = plugin.getConfig().getLong("border-options.check-interval", 20);
         BorderColor.parseColor(visualizerColor);
     }
 
@@ -86,7 +94,20 @@ public class BorderManager {
         loadConfig();
     }
 
-    public void save() {
+    public void flushIfDirty() {
+        if (!dirty) {
+            return;
+        }
+        dirty = false;
+        save();
+    }
+
+    public void forceSave() {
+        dirty = false;
+        save();
+    }
+
+    private void save() {
         YamlConfiguration config = new YamlConfiguration();
         for (BorderData data : borders.values()) {
             config.set(data.getWorld() + ".centerX", data.getCenterX());
@@ -106,6 +127,10 @@ public class BorderManager {
         }
     }
 
+    public void markDirty() {
+        dirty = true;
+    }
+
     public void addBorder(String worldName, double centerX, double centerZ, double size) {
         addBorder(worldName, centerX, centerZ, size / 2.0, size / 2.0, "square", "none");
     }
@@ -113,12 +138,12 @@ public class BorderManager {
     public void addBorder(String worldName, double centerX, double centerZ, double radiusX, double radiusZ, String shape, String wrap) {
         BorderData data = new BorderData(worldName, centerX, centerZ, radiusX, radiusZ, shape, wrap);
         borders.put(worldName, data);
-        save();
+        markDirty();
     }
 
     public void removeBorder(String worldName) {
         borders.remove(worldName);
-        save();
+        markDirty();
     }
 
     public BorderData getBorder(String worldName) {
@@ -136,7 +161,7 @@ public class BorderManager {
         }
         data.setRadiusX(radiusX);
         data.setRadiusZ(radiusZ);
-        save();
+        markDirty();
     }
 
     public void setBorderCenter(String worldName, double centerX, double centerZ) {
@@ -146,7 +171,7 @@ public class BorderManager {
         }
         data.setCenterX(centerX);
         data.setCenterZ(centerZ);
-        save();
+        markDirty();
     }
 
     public void setBorderShape(String worldName, String shape) {
@@ -155,7 +180,7 @@ public class BorderManager {
             return;
         }
         data.setShape(shape);
-        save();
+        markDirty();
     }
 
     public void setBorderWrap(String worldName, String wrap) {
@@ -164,7 +189,7 @@ public class BorderManager {
             return;
         }
         data.setWrap(wrap);
-        save();
+        markDirty();
     }
 
     public void setBypass(String worldName, UUID playerUuid, boolean bypass) {
@@ -173,7 +198,7 @@ public class BorderManager {
             return;
         }
         data.setBypass(playerUuid, bypass);
-        save();
+        markDirty();
     }
 
     public boolean isBypassing(String worldName, UUID playerUuid) {
@@ -205,11 +230,31 @@ public class BorderManager {
         return sound;
     }
 
+    public boolean preventMobSpawns() {
+        return preventMobSpawns;
+    }
+
+    public boolean preventEnderpearl() {
+        return preventEnderpearl;
+    }
+
+    public boolean preventChorusFruit() {
+        return preventChorusFruit;
+    }
+
     public boolean isVisualizerEnabled() {
         return visualizerEnabled;
     }
 
     public int getVisualizerRange() {
         return visualizerRange;
+    }
+
+    public long getCheckInterval() {
+        return checkInterval;
+    }
+
+    public TimePerDayPlugin getPlugin() {
+        return plugin;
     }
 }

@@ -1,5 +1,6 @@
 package fun.vynofc.timeperday.border;
 
+import fun.vynofc.timeperday.TimePerDayPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -12,58 +13,68 @@ import org.bukkit.Sound;
 public class BorderCheckTask implements Runnable {
 
     private final BorderManager borderManager;
+    private final TimePerDayPlugin plugin;
 
-    public BorderCheckTask(BorderManager borderManager) {
+    public BorderCheckTask(BorderManager borderManager, TimePerDayPlugin plugin) {
         this.borderManager = borderManager;
+        this.plugin = plugin;
     }
 
     @Override
     public void run() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            World world = player.getWorld();
-            BorderData border = borderManager.getBorder(world.getName());
-            if (border == null) {
-                continue;
-            }
+            player.getScheduler().run(plugin, task -> checkPlayer(player), null);
+        }
+    }
 
-            PlayerData playerData = borderManager.getPlayerData(player.getUniqueId());
+    private void checkPlayer(Player player) {
+        if (!player.isOnline()) {
+            return;
+        }
 
-            if (border.isBypassing(player.getUniqueId())
-                    || player.hasPermission("timeperday.border.bypass.move")) {
-                continue;
-            }
+        World world = player.getWorld();
+        BorderData border = borderManager.getBorder(world.getName());
+        if (border == null) {
+            return;
+        }
 
-            Location loc = player.getLocation();
-            if (border.isBounding(loc.getX(), loc.getZ())) {
-                playerData.setLastLocation(loc.clone());
-                continue;
-            }
+        PlayerData playerData = borderManager.getPlayerData(player.getUniqueId());
 
-            BorderWrapType wrapType = border.getWrapType();
-            Location redirect;
-            if (wrapType != BorderWrapType.NONE) {
-                Location wrapped = wrap(border, wrapType, loc.clone());
-                if (wrapped != null) {
-                    redirect = wrapped;
-                } else {
-                    Location lastLocation = playerData.getLastLocation().orElse(world.getSpawnLocation());
-                    lastLocation.setYaw(loc.getYaw());
-                    lastLocation.setPitch(loc.getPitch());
-                    redirect = lastLocation;
-                }
+        if (border.isBypassing(player.getUniqueId())
+                || player.hasPermission("timeperday.border.bypass.move")) {
+            return;
+        }
+
+        Location loc = player.getLocation();
+        if (border.isBounding(loc.getX(), loc.getZ())) {
+            playerData.setLastLocation(loc.clone());
+            return;
+        }
+
+        BorderWrapType wrapType = border.getWrapType();
+        Location redirect;
+        if (wrapType != BorderWrapType.NONE) {
+            Location wrapped = wrap(border, wrapType, loc.clone());
+            if (wrapped != null) {
+                redirect = wrapped;
             } else {
                 Location lastLocation = playerData.getLastLocation().orElse(world.getSpawnLocation());
                 lastLocation.setYaw(loc.getYaw());
                 lastLocation.setPitch(loc.getPitch());
                 redirect = lastLocation;
             }
-
-            playEffect(world, loc);
-            playSound(world, loc);
-            player.teleport(redirect);
-            playerData.setLastLocation(redirect.clone());
-            sendMessage(player);
+        } else {
+            Location lastLocation = playerData.getLastLocation().orElse(world.getSpawnLocation());
+            lastLocation.setYaw(loc.getYaw());
+            lastLocation.setPitch(loc.getPitch());
+            redirect = lastLocation;
         }
+
+        playEffect(world, loc);
+        playSound(world, loc);
+        player.teleport(redirect);
+        playerData.setLastLocation(redirect.clone());
+        sendMessage(player);
     }
 
     private void playEffect(World world, Location loc) {

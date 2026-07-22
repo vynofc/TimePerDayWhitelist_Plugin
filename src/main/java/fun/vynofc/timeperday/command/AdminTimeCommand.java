@@ -28,6 +28,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
     private final PlayerTimeManager timeManager;
     private final AdminMenuService adminMenuService;
     private final BorderCommand borderCommand;
+    private final BorderManager borderManager;
 
     public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager,
                             AdminMenuService adminMenuService, BorderManager borderManager) {
@@ -35,6 +36,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
         this.timeManager = timeManager;
         this.adminMenuService = adminMenuService;
         this.borderCommand = new BorderCommand(borderManager);
+        this.borderManager = borderManager;
     }
 
     // -------------------------------------------------------------------------
@@ -262,6 +264,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
     private void handleReload(CommandSender sender) {
         plugin.reloadConfig();
         timeManager.reload();
+        borderManager.reloadConfig();
         sender.sendMessage(Component.text("Konfiguration neu geladen.", NamedTextColor.GREEN));
     }
 

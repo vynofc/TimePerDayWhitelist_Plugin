@@ -3,7 +3,7 @@ package fun.vynofc.timeperday.border.util;
 import java.awt.Color;
 
 public final class BorderColor {
-    private static int colorCode;
+    private static int colorCode = -1;
 
     private BorderColor() {
     }

@@ -72,10 +72,6 @@ public class BorderData {
         this.radiusZ = radiusZ;
     }
 
-    public double getSize() {
-        return Math.max(radiusX, radiusZ) * 2;
-    }
-
     public String getShape() {
         return shape;
     }
