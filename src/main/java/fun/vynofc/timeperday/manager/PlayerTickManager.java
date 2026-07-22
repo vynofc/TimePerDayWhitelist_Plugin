@@ -88,6 +88,8 @@ class PlayerTickManager {
             return;
         }
 
+        enforceMaxHealth(player);
+
         UUID uuid = player.getUniqueId();
         if (manager.isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
             return;
@@ -108,6 +110,26 @@ class PlayerTickManager {
         if (remaining <= 0) {
             double gained = manager.progressionManager.finalizeSessionProgress(player);
             manager.messageManager.kickPlayer(player, gained, manager.getTotalLevel(uuid));
+        }
+    }
+
+    private void enforceMaxHealth(Player player) {
+        if (!manager.isMaxHealthEnabled()) {
+            return;
+        }
+        Double maxHp = manager.getMaxHealth();
+        if (maxHp == null) {
+            return;
+        }
+        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (attr == null) {
+            return;
+        }
+        if (attr.getValue() != maxHp) {
+            attr.setBaseValue(maxHp);
+        }
+        if (player.getHealth() > maxHp) {
+            player.setHealth(maxHp);
         }
     }
 }

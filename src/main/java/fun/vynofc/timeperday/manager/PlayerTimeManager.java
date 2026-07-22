@@ -48,6 +48,7 @@ public class PlayerTimeManager {
     volatile String currentDate;
     volatile ZoneId resetZoneId;
     volatile NavigableMap<Integer, Map<org.bukkit.Material, Integer>> spawnKits = new TreeMap<>();
+    volatile Double maxHealth = null;
     volatile boolean dirty = false;
 
     long tickCount = 0;
@@ -75,6 +76,7 @@ public class PlayerTimeManager {
         persistenceManager.load();
         tickManager.reloadWarningThresholds();
         worldRegenerationManager.load();
+        reloadMaxHealthFromConfig();
         dirty = false;
     }
 
@@ -87,6 +89,7 @@ public class PlayerTimeManager {
         persistenceManager.reload();
         tickManager.reloadWarningThresholds();
         worldRegenerationManager.reload();
+        reloadMaxHealthFromConfig();
     }
 
     public void tickOnlinePlayers() {
@@ -245,6 +248,29 @@ public class PlayerTimeManager {
 
     void reloadDefaultLimitFromConfig() {
         this.defaultLimitSeconds = plugin.getConfig().getLong("default-limit-minutes", 120L) * 60L;
+        reloadMaxHealthFromConfig();
+    }
+
+    void reloadMaxHealthFromConfig() {
+        String raw = plugin.getConfig().getString("max-health", "aus");
+        if (raw == null || raw.equalsIgnoreCase("aus")) {
+            this.maxHealth = null;
+        } else {
+            try {
+                double val = Double.parseDouble(raw);
+                this.maxHealth = val > 0.0D ? val : null;
+            } catch (NumberFormatException e) {
+                this.maxHealth = null;
+            }
+        }
+    }
+
+    public Double getMaxHealth() {
+        return maxHealth;
+    }
+
+    public boolean isMaxHealthEnabled() {
+        return maxHealth != null;
     }
 
     static DateTimeFormatter getDateFormatter() {

@@ -23,6 +23,7 @@ public class ConfigMenuService {
     private static final int[] CHUNK_RADIUS_PRESETS = {8, 12, 16, 20, 24, 32};
     private static final int[] CHUNKY_QUIET_PRESETS = {100, 250, 500, 1000, 2000};
     private static final int[] BORDER_SIZE_PRESETS = {500, 1000, 1500, 2000, 3000, 5000};
+    private static final double[] MAX_HEALTH_PRESETS = {20.0, 10.0, 6.0, 2.0};
 
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
@@ -75,6 +76,15 @@ public class ConfigMenuService {
                 warningsStr, Material.BOOK,
                 "Liste der verbleibenden Sekunden fuer Warnungen.",
                 "Nur in config.yml aenderbar."));
+
+        Double maxHealth = timeManager.getMaxHealth();
+        boolean healthEnabled = maxHealth != null;
+        String healthDisplay = healthEnabled ? String.valueOf(maxHealth) : "aus";
+        inventory.setItem(16, maxHealthCycleItem("max-health", "Max. Leben",
+                maxHealth, Material.APPLE,
+                "Maximales Spielerleben pro Tag.",
+                "Aktuell: " + healthDisplay,
+                "Klicke zum Durchschalten."));
 
         inventory.setItem(20, namedItem(Material.OAK_FENCE, "→ Border-Einstellungen",
                 "Oeffnet die Border-Konfiguration."));
@@ -261,6 +271,23 @@ public class ConfigMenuService {
                 toggleBooleanConfig("tpddebug", player);
                 openMainPage(player);
             }
+            case 16 -> {
+                Double current = timeManager.getMaxHealth();
+                Double next = cycleMaxHealthPreset(current);
+                if (next == null) {
+                    plugin.getConfig().set("max-health", "aus");
+                } else {
+                    plugin.getConfig().set("max-health", String.valueOf(next));
+                }
+                saveAndReloadAll();
+                player.sendMessage(Component.text()
+                        .append(Component.text("Max. Leben auf ", NamedTextColor.GREEN))
+                        .append(Component.text(next == null ? "aus" : String.valueOf(next),
+                                NamedTextColor.YELLOW))
+                        .append(Component.text(" gesetzt.", NamedTextColor.GREEN))
+                        .build());
+                openMainPage(player);
+            }
             case 20 -> openBorderPage(player);
             case 24 -> openWorldRegenPage(player);
             default -> {}
@@ -398,6 +425,22 @@ public class ConfigMenuService {
         return presets[0];
     }
 
+    private Double cycleMaxHealthPreset(Double current) {
+        double[] presets = MAX_HEALTH_PRESETS;
+        if (current == null) {
+            return presets[0];
+        }
+        for (int i = 0; i < presets.length; i++) {
+            if (Math.abs(presets[i] - current) < 0.001D) {
+                if (i + 1 >= presets.length) {
+                    return null;
+                }
+                return presets[i + 1];
+            }
+        }
+        return presets[0];
+    }
+
     private void saveAndReloadBorder() {
         plugin.saveConfig();
         borderManager.reloadConfig();
@@ -448,6 +491,26 @@ public class ConfigMenuService {
         meta.displayName(Component.text(name, NamedTextColor.GOLD));
         List<String> allLines = new ArrayList<>();
         allLines.add("Aktuell: " + current);
+        for (String line : loreLines) {
+            if (!line.startsWith("Aktuell:")) {
+                allLines.add(line);
+            }
+        }
+        meta.lore(buildLore(allLines.toArray(new String[0])));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack maxHealthCycleItem(String configPath, String name, Double current,
+                                         Material material, String... loreLines) {
+        String display = current == null ? "aus" : String.valueOf(current);
+        ItemStack item = new ItemStack(current == null ? Material.GRAY_DYE :
+                (current >= 20.0D ? Material.GOLDEN_APPLE : Material.APPLE));
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(name, current == null ?
+                NamedTextColor.RED : NamedTextColor.GREEN));
+        List<String> allLines = new ArrayList<>();
+        allLines.add("Aktuell: " + display);
         for (String line : loreLines) {
             if (!line.startsWith("Aktuell:")) {
                 allLines.add(line);

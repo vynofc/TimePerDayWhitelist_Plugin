@@ -24,6 +24,7 @@ public class PlayerListener implements Listener {
         var player = event.getPlayer();
 
         ensureBorderExists(player);
+        enforceMaxHealthOnJoin(player);
 
         timeManager.handlePlayerJoinWorldCheck(player);
 
@@ -75,6 +76,26 @@ public class PlayerListener implements Listener {
         plugin.getLogger().info("Border: Keine Border für Welt '" + worldName
                 + "' gefunden, erstelle Standard-Border mit Größe " + ((int) defaultSize));
         borderManager.addBorder(worldName, 0, 0, defaultSize);
+    }
+
+    private void enforceMaxHealthOnJoin(org.bukkit.entity.Player player) {
+        if (!timeManager.isMaxHealthEnabled()) {
+            return;
+        }
+        Double maxHp = timeManager.getMaxHealth();
+        if (maxHp == null) {
+            return;
+        }
+        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (attr == null) {
+            return;
+        }
+        if (attr.getValue() != maxHp) {
+            attr.setBaseValue(maxHp);
+        }
+        if (player.getHealth() > maxHp) {
+            player.setHealth(maxHp);
+        }
     }
 }
 

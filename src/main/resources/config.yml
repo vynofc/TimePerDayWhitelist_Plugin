@@ -9,6 +9,10 @@ tpddebug: false
 # individuelles Limit).
 default-limit-minutes: 60
 
+# Maximales Leben pro Tag. Eine Zahl (z. B. 20.0 = 10 Herzen) oder "aus"
+# zum Deaktivieren. Spielerleben wird auf diesen Wert begrenzt.
+max-health: "aus"
+
 # Zeitzone fuer den taeglichen Reset (IANA-Format, z. B. Europe/Berlin).
 # Leer lassen fuer Server-Standardzeitzone.
 reset-timezone: "Europe/Berlin"
