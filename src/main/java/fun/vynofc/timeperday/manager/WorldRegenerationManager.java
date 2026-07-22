@@ -8,21 +8,25 @@ import org.bukkit.WorldCreator;
 import org.bukkit.WorldType;
 import org.bukkit.entity.Player;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 
 class WorldRegenerationManager {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final String DELETION_MARKER = "worldregeneration_deletion.txt";
 
     private final PlayerTimeManager manager;
 
@@ -35,7 +39,7 @@ class WorldRegenerationManager {
     private String newWorldName;
     private String oldWorldName;
     private String activeWorldName;
-    private boolean chunkyRunning;
+    private volatile boolean chunkyRunning;
 
     WorldRegenerationManager(PlayerTimeManager manager) {
         this.manager = manager;
@@ -46,6 +50,8 @@ class WorldRegenerationManager {
         this.worldNamePrefix = manager.plugin.getConfig().getString("world-regeneration.world-name-prefix", "world_");
         this.chunkRadius = manager.plugin.getConfig().getInt("world-regeneration.chunk-radius", 16);
         this.chunkyQuietMs = manager.plugin.getConfig().getInt("world-regeneration.chunky-quiet-ms", 500);
+
+        deleteMarkedWorlds();
 
         if (enabled) {
             schedulePreGeneration();
@@ -58,6 +64,30 @@ class WorldRegenerationManager {
         load();
     }
 
+    private void deleteMarkedWorlds() {
+        File markerFile = new File(manager.plugin.getDataFolder(), DELETION_MARKER);
+        if (!markerFile.exists()) {
+            return;
+        }
+
+        try {
+            List<String> lines = Files.readAllLines(markerFile.toPath());
+            for (String worldName : lines) {
+                worldName = worldName.trim();
+                if (worldName.isEmpty()) {
+                    continue;
+                }
+                deleteWorldFolder(worldName);
+                manager.plugin.getLogger().info("WorldRegeneration: Alte Welt '" + worldName + "' vom Disk geloescht.");
+            }
+        } catch (IOException e) {
+            manager.plugin.getLogger().warning(
+                    "WorldRegeneration: Konnte Deletion-Marker nicht lesen: " + e.getMessage());
+        }
+
+        markerFile.delete();
+    }
+
     private void schedulePreGeneration() {
         LocalDateTime now = LocalDateTime.now(manager.resetZoneId);
         LocalDateTime midnight = now.toLocalDate().plusDays(1).atStartOfDay();
@@ -66,6 +96,7 @@ class WorldRegenerationManager {
         long delaySeconds = Duration.between(now, preGenTime).getSeconds();
         if (delaySeconds < 0) {
             delaySeconds += 86400L;
+            preGenTime = preGenTime.plusDays(1);
         }
 
         long delayTicks = delaySeconds * 20L;
@@ -88,7 +119,8 @@ class WorldRegenerationManager {
 
         if (newWorld == null) {
             manager.plugin.getLogger().warning("WorldRegeneration: Konnte neue Welt '"
-                    + newWorldName + "' nicht erstellen.");
+                    + newWorldName + "' nicht erstellen. Planung fuer morgen laeuft weiter.");
+            schedulePreGeneration();
             return;
         }
 
@@ -174,7 +206,15 @@ class WorldRegenerationManager {
         }
 
         manager.plugin.getLogger().info("WorldRegeneration: Neue Debug-Welt '" + worldName + "' erstellt.");
+
+        World defaultWorld = Bukkit.getWorlds().get(0);
+        String oldName = defaultWorld != null ? defaultWorld.getName() : null;
+
         updateServerPropertiesLevelName(worldName);
+
+        if (oldName != null) {
+            markWorldForDeletion(oldName);
+        }
 
         newWorld = null;
         newWorldName = null;
@@ -188,22 +228,37 @@ class WorldRegenerationManager {
             return;
         }
 
-        Properties props = new Properties();
-        try (FileInputStream in = new FileInputStream(serverProperties)) {
-            props.load(in);
-        } catch (IOException e) {
-            manager.plugin.getLogger().warning(
-                    "WorldRegeneration: Konnte server.properties nicht lesen: " + e.getMessage());
-            return;
-        }
+        Path path = serverProperties.toPath();
+        Path tempPath = new File(serverProperties.getParentFile(), "server.properties.tmp").toPath();
+        boolean found = false;
 
-        props.setProperty("level-name", levelName);
-
-        try (FileOutputStream out = new FileOutputStream(serverProperties)) {
-            props.store(out, "TimePerDayWhitelist world regeneration");
+        try (BufferedReader reader = Files.newBufferedReader(path);
+             BufferedWriter writer = Files.newBufferedWriter(tempPath)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("level-name=")) {
+                    writer.write("level-name=" + levelName);
+                    found = true;
+                } else {
+                    writer.write(line);
+                }
+                writer.newLine();
+            }
+            if (!found) {
+                writer.write("level-name=" + levelName);
+                writer.newLine();
+            }
         } catch (IOException e) {
             manager.plugin.getLogger().warning(
                     "WorldRegeneration: Konnte server.properties nicht schreiben: " + e.getMessage());
+            return;
+        }
+
+        try {
+            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            manager.plugin.getLogger().warning(
+                    "WorldRegeneration: Konnte server.properties nicht aktualisieren: " + e.getMessage());
             return;
         }
 
@@ -227,15 +282,12 @@ class WorldRegenerationManager {
 
         World oldWorld = Bukkit.getWorld(oldWorldName);
         if (oldWorld != null) {
-            for (Player player : oldWorld.getPlayers()) {
-                World targetWorld = Bukkit.getWorlds().get(0);
-                player.teleport(targetWorld.getSpawnLocation());
-            }
-
             boolean unloaded = Bukkit.unloadWorld(oldWorld, false);
             if (!unloaded) {
                 manager.plugin.getLogger().warning(
-                        "WorldRegeneration: Konnte alte Welt '" + oldWorldName + "' nicht entladen.");
+                        "WorldRegeneration: Konnte alte Welt '" + oldWorldName
+                                + "' nicht entladen. Wird beim naechsten Start geloescht.");
+                markWorldForDeletion(oldWorldName);
                 oldWorldName = null;
                 return;
             }
@@ -244,6 +296,23 @@ class WorldRegenerationManager {
         deleteWorldFolder(oldWorldName);
         manager.plugin.getLogger().info("WorldRegeneration: Alte Welt '" + oldWorldName + "' geloescht.");
         oldWorldName = null;
+    }
+
+    private void markWorldForDeletion(String worldName) {
+        File markerFile = new File(manager.plugin.getDataFolder(), DELETION_MARKER);
+        try {
+            List<String> lines = new ArrayList<>();
+            if (markerFile.exists()) {
+                lines = Files.readAllLines(markerFile.toPath());
+            }
+            lines.add(worldName);
+            Files.write(markerFile.toPath(), lines);
+            manager.plugin.getLogger().info("WorldRegeneration: Welt '" + worldName
+                    + "' zum Loeschen beim naechsten Start vorgemerkt.");
+        } catch (IOException e) {
+            manager.plugin.getLogger().warning(
+                    "WorldRegeneration: Konnte Deletion-Marker nicht schreiben: " + e.getMessage());
+        }
     }
 
     private void deleteWorldFolder(String worldName) {
