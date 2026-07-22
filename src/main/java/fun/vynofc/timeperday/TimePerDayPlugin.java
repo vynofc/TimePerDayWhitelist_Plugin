@@ -42,7 +42,7 @@ public class TimePerDayPlugin extends JavaPlugin {
         borderManager = new BorderManager(this);
         borderManager.load();
 
-        getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager), this);
+        getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager, borderManager), this);
         getServer().getPluginManager().registerEvents(new AdminMenuListener(adminMenuService), this);
         getServer().getPluginManager().registerEvents(new UserSettingsMenuListener(userSettingsMenuService), this);
         getServer().getPluginManager().registerEvents(new BorderListener(borderManager), this);

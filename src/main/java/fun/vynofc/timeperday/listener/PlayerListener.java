@@ -1,6 +1,7 @@
 package fun.vynofc.timeperday.listener;
 
 import fun.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.border.BorderManager;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,15 +11,19 @@ public class PlayerListener implements Listener {
 
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
+    private final BorderManager borderManager;
 
-    public PlayerListener(TimePerDayPlugin plugin, PlayerTimeManager timeManager) {
+    public PlayerListener(TimePerDayPlugin plugin, PlayerTimeManager timeManager, BorderManager borderManager) {
         this.plugin = plugin;
         this.timeManager = timeManager;
+        this.borderManager = borderManager;
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         var player = event.getPlayer();
+
+        ensureBorderExists(player);
 
         timeManager.handlePlayerJoinWorldCheck(player);
 
@@ -59,6 +64,17 @@ public class PlayerListener implements Listener {
                 player.sendMessage(timeManager.buildJoinInfoComponent(player, kitGiven));
             }
         }
+    }
+
+    private void ensureBorderExists(org.bukkit.entity.Player player) {
+        String worldName = player.getWorld().getName();
+        if (borderManager.getBorder(worldName) != null) {
+            return;
+        }
+        double defaultSize = plugin.getConfig().getDouble("world-regeneration.default-border-size", 1000);
+        plugin.getLogger().info("Border: Keine Border für Welt '" + worldName
+                + "' gefunden, erstelle Standard-Border mit Größe " + ((int) defaultSize));
+        borderManager.addBorder(worldName, 0, 0, defaultSize);
     }
 }
 
