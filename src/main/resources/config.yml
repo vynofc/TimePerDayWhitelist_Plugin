@@ -2,6 +2,9 @@
 #  TimePerDayWhitelist - Konfiguration
 # ============================================================
 
+# tpddebug Command Usage
+tpddebug: false
+
 # Standard-Tageslimit in Minuten (gilt für alle Spieler ohne
 # individuelles Limit).
 default-limit-minutes: 60
@@ -18,18 +21,48 @@ warnings:
   - 30    # 30 Sekunden
   - 10    # 10 Sekunden
 
+# ============================================================
+#  World Regeneration (taeglicher Welt-Reset beim Tageswechsel)
+# ============================================================
+# Erstellt jeden Tag 30 Minuten vor Mitternacht eine neue Welt,
+# laesst Chunky eine 500x500 Region (16 Chunk-Radius) vor-
+# generieren und schaltet um Mitternacht auf die neue Welt um.
+# 30 Minuten danach wird die alte Welt geloescht.
+world-regeneration:
+  enabled: true
+  world-name-prefix: "world_"
+  chunk-radius: 16
+  chunky-quiet-ms: 500
+  default-border-size: 1000
+
+# ============================================================
+#  Border-Optionen
+# ============================================================
+border-options:
+  check-interval: 20
+  message: "&cDu hast das Ende der Welt erreicht!"
+  use-action-bar: true
+  effect: ender_signal
+  sound: entity_enderman_teleport
+  prevent-mob-spawns: false
+  prevent-enderpearl: false
+  prevent-chorus-fruit: false
+  visualizer-enabled: true
+  visualizer-range: 8
+  visualizer-color: 20A0FF
+
 # Nachrichten (unterstützt MiniMessage-Format)
 messages:
   kick-title: "<gradient:#ff6b6b:#ffd166><bold>Spielzeit fuer heute verbraucht</bold></gradient>"
   kick-line1: "<gray>Profil von <yellow>{player}</yellow><gray> - gespielt: <yellow>{played}</yellow> <dark_gray>| <gray>Limit: <yellow>{limit}</yellow>"
   kick-line2: "<gray>Heute verdient: <yellow>+{gained-level}</yellow> <dark_gray>| <gray>Session: <yellow>{session-points}</yellow>"
   kick-line3: "<gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
-  kick-line4: "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/timeleft</yellow><gray> fuer dein Profil."
+  kick-line4: "<gray>Du kannst morgen wieder spielen. Nutze dann <yellow>/tpd time</yellow><gray> fuer dein Profil."
   warning: "<yellow>⚠ {remaining} verbleibende Spielzeit heute!"
   join-title: "<gradient:#7bed9f:#70a1ff><bold>Willkommen zurueck, {player}!</bold></gradient>"
   join-info: "<gray>Verbleibend: <yellow>{remaining}</yellow> <dark_gray>| <gray>Gesamtlevel: <yellow>{total-level}</yellow> <dark_gray>| <gray>Bestes Kit: <yellow>{kit-level}</yellow>"
   join-line2: "<gray>Session heute: <yellow>{session-points}</yellow> <dark_gray>| <gray>Kit heute erhalten: <yellow>{kit-given}</yellow>"
-  join-tip: "<gray>Tipp: Nutze jederzeit <yellow>/timeleft</yellow><gray> fuer deine komplette Profiluebersicht."
+  join-tip: "<gray>Tipp: Nutze jederzeit <yellow>/tpd time</yellow><gray> fuer deine komplette Profiluebersicht."
 
 # Ob beim Einloggen die verbleibende Zeit angezeigt wird
 show-on-join: true
@@ -65,6 +98,8 @@ progression:
       level: 0.22
     NETHERITE_SCRAP:
       level: 0.35
+    EXPERIENCE:
+      level-per-level: 0.2
 
   # Kit-System: immer nur das höchste erreichte Kit wird vergeben.
   # Pro Tag nur 1x Kit pro Spieler.
@@ -236,3 +271,4 @@ progression:
       GOLDEN_APPLE: 4
       ENCHANTED_GOLDEN_APPLE: 1
       COOKED_BEEF: 24
+

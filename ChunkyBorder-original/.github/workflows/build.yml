@@ -1,0 +1,42 @@
+name: Build ChunkyBorder
+on: [ push, pull_request ]
+jobs:
+  build:
+    # Only run on PRs if the source branch is on someone else's repo
+    if: ${{ github.event_name != 'pull_request' || github.repository != github.event.pull_request.head.repo.full_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gradle wrapper validation
+        uses: gradle/wrapper-validation-action@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+      - name: Build
+        run: ./gradlew build
+      - name: Upload Bukkit
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bukkit
+          path: "bukkit/build/libs/ChunkyBorder-*.jar"
+      - name: Upload Fabric
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fabric
+          path: "fabric/build/libs/ChunkyBorder-*.jar"
+      - name: Upload Forge
+        uses: actions/upload-artifact@v4
+        with:
+          name: Forge
+          path: "forge/build/libs/ChunkyBorder-*.jar"
+      - name: Upload NeoForge
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeoForge
+          path: "neoforge/build/libs/ChunkyBorder-*.jar"
