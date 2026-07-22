@@ -9,9 +9,9 @@ tpddebug: false
 # individuelles Limit).
 default-limit-minutes: 60
 
-# Maximales Leben pro Tag. Eine Zahl (z. B. 20.0 = 10 Herzen) oder "aus"
-# zum Deaktivieren. Spielerleben wird auf diesen Wert begrenzt.
-max-health: "aus"
+# Maximale Tode pro Tag. Eine Zahl (z. B. 3) oder "aus"
+# zum Deaktivieren. Nach Erreichen des Limits wird der Spieler gekickt.
+max-lives: "aus"
 
 # Bonus-Level fuer taegliches Einloggen an aufeinanderfolgenden Tagen.
 # Deaktiviert: Streak-Bonus wird nicht vergeben.

@@ -23,7 +23,7 @@ public class ConfigMenuService {
     private static final int[] CHUNK_RADIUS_PRESETS = {8, 12, 16, 20, 24, 32};
     private static final int[] CHUNKY_QUIET_PRESETS = {100, 250, 500, 1000, 2000};
     private static final int[] BORDER_SIZE_PRESETS = {500, 1000, 1500, 2000, 3000, 5000};
-    private static final double[] MAX_HEALTH_PRESETS = {20.0, 10.0, 6.0, 2.0};
+    private static final int[] MAX_LIVES_PRESETS = {1, 2, 3, 5, 10};
     private static final double[] STREAK_BONUS_PRESETS = {0.1, 0.25, 0.5, 1.0, 2.0};
 
     private final TimePerDayPlugin plugin;
@@ -78,13 +78,13 @@ public class ConfigMenuService {
                 "Liste der verbleibenden Sekunden fuer Warnungen.",
                 "Nur in config.yml aenderbar."));
 
-        Double maxHealth = timeManager.getMaxHealth();
-        boolean healthEnabled = maxHealth != null;
-        String healthDisplay = healthEnabled ? String.valueOf(maxHealth) : "aus";
-        inventory.setItem(16, maxHealthCycleItem("max-health", "Max. Leben",
-                maxHealth, Material.APPLE,
-                "Maximales Spielerleben pro Tag.",
-                "Aktuell: " + healthDisplay,
+        Integer maxLives = timeManager.getMaxLives();
+        boolean livesEnabled = maxLives != null;
+        String livesDisplay = livesEnabled ? String.valueOf(maxLives) : "aus";
+        inventory.setItem(16, maxLivesCycleItem("max-lives", "Max. Leben (Tode)",
+                maxLives, Material.PLAYER_HEAD,
+                "Maximale Tode pro Tag, danach Kick.",
+                "Aktuell: " + livesDisplay,
                 "Klicke zum Durchschalten."));
 
         boolean vaultKeep = plugin.getConfig().getBoolean("vault-keep-on-death", false);
@@ -292,12 +292,12 @@ public class ConfigMenuService {
                 openMainPage(player);
             }
             case 16 -> {
-                Double current = timeManager.getMaxHealth();
-                Double next = cycleMaxHealthPreset(current);
+                Integer current = timeManager.getMaxLives();
+                Integer next = cycleMaxLivesPreset(current);
                 if (next == null) {
-                    plugin.getConfig().set("max-health", "aus");
+                    plugin.getConfig().set("max-lives", "aus");
                 } else {
-                    plugin.getConfig().set("max-health", String.valueOf(next));
+                    plugin.getConfig().set("max-lives", String.valueOf(next));
                 }
                 saveAndReloadAll();
                 player.sendMessage(Component.text()
@@ -467,13 +467,13 @@ public class ConfigMenuService {
         return presets[0];
     }
 
-    private Double cycleMaxHealthPreset(Double current) {
-        double[] presets = MAX_HEALTH_PRESETS;
+    private Integer cycleMaxLivesPreset(Integer current) {
+        int[] presets = MAX_LIVES_PRESETS;
         if (current == null) {
             return presets[0];
         }
         for (int i = 0; i < presets.length; i++) {
-            if (Math.abs(presets[i] - current) < 0.001D) {
+            if (presets[i] == current) {
                 if (i + 1 >= presets.length) {
                     return null;
                 }
@@ -552,11 +552,10 @@ public class ConfigMenuService {
         return item;
     }
 
-    private ItemStack maxHealthCycleItem(String configPath, String name, Double current,
+    private ItemStack maxLivesCycleItem(String configPath, String name, Integer current,
                                          Material material, String... loreLines) {
         String display = current == null ? "aus" : String.valueOf(current);
-        ItemStack item = new ItemStack(current == null ? Material.GRAY_DYE :
-                (current >= 20.0D ? Material.GOLDEN_APPLE : Material.APPLE));
+        ItemStack item = new ItemStack(current == null ? Material.GRAY_DYE : material);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text(name, current == null ?
                 NamedTextColor.RED : NamedTextColor.GREEN));

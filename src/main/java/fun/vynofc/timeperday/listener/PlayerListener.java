@@ -28,7 +28,6 @@ public class PlayerListener implements Listener {
         var player = event.getPlayer();
 
         ensureBorderExists(player);
-        enforceMaxHealthOnJoin(player);
         handleStreakBonus(player);
 
         timeManager.handlePlayerJoinWorldCheck(player);
@@ -85,11 +84,44 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!timeManager.isVaultKeepOnDeathEnabled()) {
+        if (timeManager.isVaultKeepOnDeathEnabled()) {
+            event.setKeepLevel(true);
+            event.setDroppedExp(0);
+        }
+
+        var player = event.getPlayer();
+        if (!timeManager.isMaxLivesEnabled()) {
             return;
         }
-        event.setKeepLevel(true);
-        event.setDroppedExp(0);
+        var uuid = player.getUniqueId();
+        if (timeManager.isWhitelisted(uuid) || player.hasPermission("timeperday.bypass")) {
+            return;
+        }
+
+        timeManager.incrementDeathsToday(uuid);
+        int deaths = timeManager.getDeathsToday(uuid);
+        int maxLives = timeManager.getMaxLives();
+        int remaining = maxLives - deaths;
+
+        if (remaining <= 0) {
+            double gained = timeManager.getSessionPoints(player);
+            player.getScheduler().runDelayed(plugin, task -> {
+                timeManager.getPlugin().getLogger().info(
+                        player.getName() + " hat alle " + maxLives + " Leben verbraucht.");
+                player.kick(net.kyori.adventure.text.Component.text()
+                        .append(net.kyori.adventure.text.Component.text(
+                                "Du hast alle " + maxLives + " Leben fuer heute verbraucht!",
+                                net.kyori.adventure.text.format.NamedTextColor.RED))
+                        .build());
+            }, null, 1L);
+        } else {
+            player.sendMessage(net.kyori.adventure.text.Component.text()
+                    .append(net.kyori.adventure.text.Component.text("Tod " + deaths + " von " + maxLives + " – ",
+                            net.kyori.adventure.text.format.NamedTextColor.RED))
+                    .append(net.kyori.adventure.text.Component.text("noch " + remaining + " Leben uebrig.",
+                            net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                    .build());
+        }
     }
 
     private void handleStreakBonus(org.bukkit.entity.Player player) {
@@ -132,26 +164,6 @@ public class PlayerListener implements Listener {
                     .append(net.kyori.adventure.text.Component.text(streak + " Tage in Folge", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
                     .append(net.kyori.adventure.text.Component.text(" → +" + String.format("%.1f", bonus) + " Level", net.kyori.adventure.text.format.NamedTextColor.GREEN))
                     .build());
-        }
-    }
-
-    private void enforceMaxHealthOnJoin(org.bukkit.entity.Player player) {
-        if (!timeManager.isMaxHealthEnabled()) {
-            return;
-        }
-        Double maxHp = timeManager.getMaxHealth();
-        if (maxHp == null) {
-            return;
-        }
-        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-        if (attr == null) {
-            return;
-        }
-        if (attr.getValue() != maxHp) {
-            attr.setBaseValue(maxHp);
-        }
-        if (player.getHealth() > maxHp) {
-            player.setHealth(maxHp);
         }
     }
 }

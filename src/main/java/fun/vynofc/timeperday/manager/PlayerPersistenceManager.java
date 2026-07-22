@@ -52,6 +52,7 @@ class PlayerPersistenceManager {
         loadBooleanSection("show-action-bar", manager.showActionBar);
         loadIntSection("streak-count", manager.streakCount);
         loadStringSection("last-login-date", manager.lastLoginDate);
+        loadIntSection("deaths-today", manager.deathsToday);
         manager.spawnKits = readSpawnKits();
     }
 
@@ -68,6 +69,7 @@ class PlayerPersistenceManager {
         manager.showActionBar.forEach((uuid, val) -> dataConfig.set("show-action-bar." + uuid, val));
         manager.streakCount.forEach((uuid, val) -> dataConfig.set("streak-count." + uuid, val));
         manager.lastLoginDate.forEach((uuid, val) -> dataConfig.set("last-login-date." + uuid, val));
+        manager.deathsToday.forEach((uuid, val) -> dataConfig.set("deaths-today." + uuid, val));
         int pendingResetIndex = 0;
         for (UUID uuid : manager.pendingDayOverReset) {
             dataConfig.set("pending-dayover-reset." + pendingResetIndex, uuid.toString());
@@ -93,6 +95,7 @@ class PlayerPersistenceManager {
         manager.showActionBar.clear();
         manager.streakCount.clear();
         manager.lastLoginDate.clear();
+        manager.deathsToday.clear();
         manager.pendingDayOverReset.clear();
         load();
     }

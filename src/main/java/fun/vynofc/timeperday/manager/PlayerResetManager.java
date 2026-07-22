@@ -36,6 +36,7 @@ class PlayerResetManager {
         allTrackedUuids.addAll(manager.lastKitClaimDate.keySet());
         allTrackedUuids.addAll(manager.totalLevel.keySet());
         allTrackedUuids.addAll(manager.playerLimits.keySet());
+        allTrackedUuids.addAll(manager.deathsToday.keySet());
 
         Set<UUID> onlineAtTrigger = new HashSet<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -46,6 +47,7 @@ class PlayerResetManager {
         manager.playedToday.clear();
         manager.lastKitClaimDate.clear();
         manager.pendingDayOverReset.clear();
+        manager.deathsToday.clear();
         if (isDebug) {
             manager.worldRegenerationManager.debugDayOver();
         } else {
@@ -92,6 +94,7 @@ class PlayerResetManager {
         manager.totalLevel.clear();
         manager.lastKitClaimDate.clear();
         manager.pendingDayOverReset.clear();
+        manager.deathsToday.clear();
 
         manager.currentDate = LocalDate.now().format(PlayerTimeManager.getDateFormatter());
         manager.forceSave();

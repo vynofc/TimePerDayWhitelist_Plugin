@@ -43,6 +43,7 @@ public class PlayerTimeManager {
     final ConcurrentHashMap<UUID, Boolean> showActionBar = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, Integer> streakCount = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, String> lastLoginDate = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<UUID, Integer> deathsToday = new ConcurrentHashMap<>();
 
     final java.util.Set<UUID> pendingDayOverReset = ConcurrentHashMap.newKeySet();
 
@@ -50,7 +51,7 @@ public class PlayerTimeManager {
     volatile String currentDate;
     volatile ZoneId resetZoneId;
     volatile NavigableMap<Integer, Map<org.bukkit.Material, Integer>> spawnKits = new TreeMap<>();
-    volatile Double maxHealth = null;
+    volatile Integer maxLives = null;
     volatile boolean streakBonusEnabled = false;
     volatile double streakBonusLevel = 0.5D;
     volatile boolean vaultKeepOnDeath = false;
@@ -81,7 +82,7 @@ public class PlayerTimeManager {
         persistenceManager.load();
         tickManager.reloadWarningThresholds();
         worldRegenerationManager.load();
-        reloadMaxHealthFromConfig();
+        reloadMaxLivesFromConfig();
         reloadStreakBonusFromConfig();
         reloadVaultKeepOnDeathFromConfig();
         dirty = false;
@@ -96,7 +97,7 @@ public class PlayerTimeManager {
         persistenceManager.reload();
         tickManager.reloadWarningThresholds();
         worldRegenerationManager.reload();
-        reloadMaxHealthFromConfig();
+        reloadMaxLivesFromConfig();
     }
 
     public void tickOnlinePlayers() {
@@ -255,29 +256,38 @@ public class PlayerTimeManager {
 
     void reloadDefaultLimitFromConfig() {
         this.defaultLimitSeconds = plugin.getConfig().getLong("default-limit-minutes", 120L) * 60L;
-        reloadMaxHealthFromConfig();
+        reloadMaxLivesFromConfig();
     }
 
-    void reloadMaxHealthFromConfig() {
-        String raw = plugin.getConfig().getString("max-health", "aus");
+    void reloadMaxLivesFromConfig() {
+        String raw = plugin.getConfig().getString("max-lives", "aus");
         if (raw == null || raw.equalsIgnoreCase("aus")) {
-            this.maxHealth = null;
+            this.maxLives = null;
         } else {
             try {
-                double val = Double.parseDouble(raw);
-                this.maxHealth = val > 0.0D ? val : null;
+                int val = Integer.parseInt(raw);
+                this.maxLives = val > 0 ? val : null;
             } catch (NumberFormatException e) {
-                this.maxHealth = null;
+                this.maxLives = null;
             }
         }
     }
 
-    public Double getMaxHealth() {
-        return maxHealth;
+    public Integer getMaxLives() {
+        return maxLives;
     }
 
-    public boolean isMaxHealthEnabled() {
-        return maxHealth != null;
+    public boolean isMaxLivesEnabled() {
+        return maxLives != null;
+    }
+
+    public int getDeathsToday(UUID uuid) {
+        return deathsToday.getOrDefault(uuid, 0);
+    }
+
+    public void incrementDeathsToday(UUID uuid) {
+        deathsToday.merge(uuid, 1, Integer::sum);
+        markDirty();
     }
 
     public boolean isVaultKeepOnDeathEnabled() {
