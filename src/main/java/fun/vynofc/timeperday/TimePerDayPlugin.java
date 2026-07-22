@@ -1,5 +1,8 @@
 package fun.vynofc.timeperday;
 
+import fun.vynofc.timeperday.border.BorderCheckTask;
+import fun.vynofc.timeperday.border.BorderListener;
+import fun.vynofc.timeperday.border.BorderManager;
 import fun.vynofc.timeperday.command.TimeCommand;
 import fun.vynofc.timeperday.command.AdminTimeCommand;
 import fun.vynofc.timeperday.command.DebugTimeCommand;
@@ -16,6 +19,7 @@ public class TimePerDayPlugin extends JavaPlugin {
     private PlayerTimeManager timeManager;
     private AdminMenuService adminMenuService;
     private UserSettingsMenuService userSettingsMenuService;
+    private BorderManager borderManager;
 
     @Override
     public void onEnable() {
@@ -25,12 +29,15 @@ public class TimePerDayPlugin extends JavaPlugin {
         timeManager.load();
         adminMenuService = new AdminMenuService(this, timeManager);
         userSettingsMenuService = new UserSettingsMenuService(timeManager);
+        borderManager = new BorderManager(this);
+        borderManager.load();
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager), this);
         getServer().getPluginManager().registerEvents(new AdminMenuListener(adminMenuService), this);
         getServer().getPluginManager().registerEvents(new UserSettingsMenuListener(userSettingsMenuService), this);
+        getServer().getPluginManager().registerEvents(new BorderListener(borderManager), this);
 
-        AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager, adminMenuService);
+        AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager, adminMenuService, borderManager);
         var adminCommand = getCommand("tpdadmin");
         if (adminCommand != null) {
             adminCommand.setExecutor(adminCmd);
@@ -55,6 +62,10 @@ public class TimePerDayPlugin extends JavaPlugin {
         getServer().getGlobalRegionScheduler().runAtFixedRate(this,
                 task -> timeManager.tickOnlinePlayers(), 1L, 20L);
 
+        BorderCheckTask borderCheckTask = new BorderCheckTask(borderManager);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this,
+                task -> borderCheckTask.run(), 1L, 20L);
+
         getLogger().info("TimePerDayWhitelist aktiviert.");
     }
 
@@ -77,6 +88,10 @@ public class TimePerDayPlugin extends JavaPlugin {
 
     public UserSettingsMenuService getUserSettingsMenuService() {
         return userSettingsMenuService;
+    }
+
+    public BorderManager getBorderManager() {
+        return borderManager;
     }
 }
 

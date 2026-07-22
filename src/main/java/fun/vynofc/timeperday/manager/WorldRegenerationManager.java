@@ -1,5 +1,6 @@
 package fun.vynofc.timeperday.manager;
 
+import fun.vynofc.timeperday.border.BorderManager;
 import org.bukkit.Bukkit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -34,6 +35,7 @@ class WorldRegenerationManager {
     private String worldNamePrefix;
     private int chunkRadius;
     private int chunkyQuietMs;
+    private double defaultBorderSize;
 
     private World newWorld;
     private String newWorldName;
@@ -50,6 +52,7 @@ class WorldRegenerationManager {
         this.worldNamePrefix = manager.plugin.getConfig().getString("world-regeneration.world-name-prefix", "world_");
         this.chunkRadius = manager.plugin.getConfig().getInt("world-regeneration.chunk-radius", 16);
         this.chunkyQuietMs = manager.plugin.getConfig().getInt("world-regeneration.chunky-quiet-ms", 500);
+        this.defaultBorderSize = manager.plugin.getConfig().getDouble("world-regeneration.default-border-size", 1000);
 
         deleteMarkedWorlds();
 
@@ -125,6 +128,8 @@ class WorldRegenerationManager {
         }
 
         manager.plugin.getLogger().info("WorldRegeneration: Neue Welt '" + newWorldName + "' erstellt.");
+
+        manager.plugin.getBorderManager().addBorder(newWorldName, 0, 0, defaultBorderSize);
 
         if (Bukkit.getPluginManager().getPlugin("Chunky") != null) {
             startChunkyGeneration();
@@ -206,6 +211,8 @@ class WorldRegenerationManager {
         }
 
         manager.plugin.getLogger().info("WorldRegeneration: Neue Debug-Welt '" + worldName + "' erstellt.");
+
+        manager.plugin.getBorderManager().addBorder(worldName, 0, 0, defaultBorderSize);
 
         World defaultWorld = Bukkit.getWorlds().get(0);
         String oldName = defaultWorld != null ? defaultWorld.getName() : null;

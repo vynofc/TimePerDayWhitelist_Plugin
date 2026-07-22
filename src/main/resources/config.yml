@@ -33,6 +33,7 @@ world-regeneration:
   world-name-prefix: "world_"
   chunk-radius: 16
   chunky-quiet-ms: 500
+  default-border-size: 1000
 
 # Nachrichten (unterstützt MiniMessage-Format)
 messages:

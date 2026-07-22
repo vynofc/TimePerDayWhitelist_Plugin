@@ -1,6 +1,8 @@
 package fun.vynofc.timeperday.command;
 
 import fun.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.border.BorderCommand;
+import fun.vynofc.timeperday.border.BorderManager;
 import fun.vynofc.timeperday.gui.AdminMenuService;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import net.kyori.adventure.text.Component;
@@ -25,12 +27,14 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
     private final AdminMenuService adminMenuService;
+    private final BorderCommand borderCommand;
 
     public AdminTimeCommand(TimePerDayPlugin plugin, PlayerTimeManager timeManager,
-                            AdminMenuService adminMenuService) {
+                            AdminMenuService adminMenuService, BorderManager borderManager) {
         this.plugin = plugin;
         this.timeManager = timeManager;
         this.adminMenuService = adminMenuService;
+        this.borderCommand = new BorderCommand(borderManager);
     }
 
     // -------------------------------------------------------------------------
@@ -62,6 +66,7 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
             case "setdefault" -> handleSetDefault(sender, args);
             case "whitelist"  -> handleWhitelist(sender, args);
             case "gui"        -> handleGui(sender, args);
+            case "border"     -> borderCommand.execute(sender, args);
             case "reload"     -> handleReload(sender);
             default           -> sendHelp(sender);
         }
@@ -286,8 +291,16 @@ public class AdminTimeCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             return filter(Arrays.asList("set", "info", "setlevel", "addlevel", "reset", "resetplayer",
-                    "setdefault", "whitelist", "gui", "reload"),
+                    "setdefault", "whitelist", "gui", "border", "reload"),
                     args[0]);
+        }
+
+        if (args.length >= 2 && args[0].equalsIgnoreCase("border")) {
+            String[] borderArgs = new String[args.length];
+            System.arraycopy(args, 0, borderArgs, 0, args.length);
+            return borderCommand.tabComplete(borderArgs).stream()
+                    .filter(s -> s.toLowerCase(Locale.ROOT).startsWith(args[args.length - 1].toLowerCase(Locale.ROOT)))
+                    .collect(Collectors.toList());
         }
 
         if (args.length == 2) {
