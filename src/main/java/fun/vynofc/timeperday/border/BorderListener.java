@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 public class BorderListener implements Listener {
@@ -42,8 +43,11 @@ public class BorderListener implements Listener {
             return;
         }
 
-        if (event.getCause() == PlayerTeleportEvent.TeleportCause.ENDER_PEARL
-                || event.getCause() == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT) {
+        if (event.getCause() == PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
+            event.setCancelled(true);
+            return;
+        }
+        if (event.getCause() == PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT) {
             event.setCancelled(true);
             return;
         }
@@ -111,5 +115,10 @@ public class BorderListener implements Listener {
         if (!border.isBounding(x, z)) {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        borderManager.removePlayerData(event.getPlayer().getUniqueId());
     }
 }

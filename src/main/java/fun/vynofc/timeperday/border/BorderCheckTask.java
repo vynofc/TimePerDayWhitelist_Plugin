@@ -1,9 +1,13 @@
 package fun.vynofc.timeperday.border;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 
 public class BorderCheckTask implements Runnable {
 
@@ -22,6 +26,8 @@ public class BorderCheckTask implements Runnable {
                 continue;
             }
 
+            PlayerData playerData = borderManager.getPlayerData(player.getUniqueId());
+
             if (border.isBypassing(player.getUniqueId())
                     || player.hasPermission("timeperday.border.bypass.move")) {
                 continue;
@@ -29,22 +35,71 @@ public class BorderCheckTask implements Runnable {
 
             Location loc = player.getLocation();
             if (border.isBounding(loc.getX(), loc.getZ())) {
+                playerData.setLastLocation(loc.clone());
                 continue;
             }
 
             BorderWrapType wrapType = border.getWrapType();
+            Location redirect;
             if (wrapType != BorderWrapType.NONE) {
-                Location wrapped = wrap(border, wrapType, loc);
+                Location wrapped = wrap(border, wrapType, loc.clone());
                 if (wrapped != null) {
-                    player.teleport(wrapped);
-                    continue;
+                    redirect = wrapped;
+                } else {
+                    Location lastLocation = playerData.getLastLocation().orElse(world.getSpawnLocation());
+                    lastLocation.setYaw(loc.getYaw());
+                    lastLocation.setPitch(loc.getPitch());
+                    redirect = lastLocation;
                 }
+            } else {
+                Location lastLocation = playerData.getLastLocation().orElse(world.getSpawnLocation());
+                lastLocation.setYaw(loc.getYaw());
+                lastLocation.setPitch(loc.getPitch());
+                redirect = lastLocation;
             }
 
-            Location spawn = world.getSpawnLocation();
-            spawn.setYaw(loc.getYaw());
-            spawn.setPitch(loc.getPitch());
-            player.teleport(spawn);
+            playEffect(world, loc);
+            playSound(world, loc);
+            player.teleport(redirect);
+            playerData.setLastLocation(redirect.clone());
+            sendMessage(player);
+        }
+    }
+
+    private void playEffect(World world, Location loc) {
+        String effectName = borderManager.getEffect();
+        if (effectName == null || effectName.isEmpty()) {
+            return;
+        }
+        try {
+            Particle particle = Particle.valueOf(effectName.toUpperCase());
+            world.spawnParticle(particle, loc, 5, 0.5, 0.5, 0.5, 0);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    private void playSound(World world, Location loc) {
+        String soundName = borderManager.getSound();
+        if (soundName == null || soundName.isEmpty()) {
+            return;
+        }
+        try {
+            Sound sound = Sound.valueOf(soundName.toUpperCase());
+            world.playSound(loc, sound, 1.0f, 1.0f);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    private void sendMessage(Player player) {
+        String msg = borderManager.getMessage();
+        if (msg == null || msg.isEmpty()) {
+            return;
+        }
+        Component component = LegacyComponentSerializer.legacyAmpersand().deserialize(msg);
+        if (borderManager.useActionBar()) {
+            player.sendActionBar(component);
+        } else {
+            player.sendMessage(component);
         }
     }
 
@@ -86,7 +141,6 @@ public class BorderCheckTask implements Runnable {
         } else {
             double halfWidth = border.getRadiusX();
             double halfHeight = border.getRadiusZ();
-            double tan = Math.tan(angle);
             double cos = Math.cos(angle);
             double sin = Math.sin(angle);
 

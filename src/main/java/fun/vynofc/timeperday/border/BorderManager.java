@@ -1,6 +1,7 @@
 package fun.vynofc.timeperday.border;
 
 import fun.vynofc.timeperday.TimePerDayPlugin;
+import fun.vynofc.timeperday.border.util.BorderColor;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,7 +18,16 @@ public class BorderManager {
 
     private final TimePerDayPlugin plugin;
     private final Map<String, BorderData> borders = new HashMap<>();
+    private final Map<UUID, PlayerData> players = new HashMap<>();
     private final File bordersFile;
+
+    private String message;
+    private boolean useActionBar;
+    private String effect;
+    private String sound;
+    private boolean visualizerEnabled;
+    private int visualizerRange;
+    private String visualizerColor;
 
     public BorderManager(TimePerDayPlugin plugin) {
         this.plugin = plugin;
@@ -25,6 +35,7 @@ public class BorderManager {
     }
 
     public void load() {
+        loadConfig();
         borders.clear();
         if (!bordersFile.exists()) {
             return;
@@ -54,10 +65,25 @@ public class BorderManager {
             }
 
             borders.put(worldName, data);
-            applyToWorld(worldName, data);
         }
 
         plugin.getLogger().info("Border: " + borders.size() + " Border(s) geladen.");
+    }
+
+    private void loadConfig() {
+        message = plugin.getConfig().getString("border-options.message", "&cDu hast das Ende der Welt erreicht!");
+        useActionBar = plugin.getConfig().getBoolean("border-options.use-action-bar", true);
+        effect = plugin.getConfig().getString("border-options.effect", "ender_signal");
+        sound = plugin.getConfig().getString("border-options.sound", "entity_enderman_teleport");
+        visualizerEnabled = plugin.getConfig().getBoolean("border-options.visualizer-enabled", true);
+        visualizerRange = plugin.getConfig().getInt("border-options.visualizer-range", 8);
+        visualizerColor = plugin.getConfig().getString("border-options.visualizer-color", "20A0FF");
+        BorderColor.parseColor(visualizerColor);
+    }
+
+    public void reloadConfig() {
+        plugin.reloadConfig();
+        loadConfig();
     }
 
     public void save() {
@@ -87,7 +113,6 @@ public class BorderManager {
     public void addBorder(String worldName, double centerX, double centerZ, double radiusX, double radiusZ, String shape, String wrap) {
         BorderData data = new BorderData(worldName, centerX, centerZ, radiusX, radiusZ, shape, wrap);
         borders.put(worldName, data);
-        applyToWorld(worldName, data);
         save();
     }
 
@@ -111,7 +136,6 @@ public class BorderManager {
         }
         data.setRadiusX(radiusX);
         data.setRadiusZ(radiusZ);
-        applyToWorld(worldName, data);
         save();
     }
 
@@ -122,7 +146,6 @@ public class BorderManager {
         }
         data.setCenterX(centerX);
         data.setCenterZ(centerZ);
-        applyToWorld(worldName, data);
         save();
     }
 
@@ -132,7 +155,6 @@ public class BorderManager {
             return;
         }
         data.setShape(shape);
-        applyToWorld(worldName, data);
         save();
     }
 
@@ -159,14 +181,35 @@ public class BorderManager {
         return data != null && data.isBypassing(playerUuid);
     }
 
-    private void applyToWorld(String worldName, BorderData data) {
-        World world = Bukkit.getWorld(worldName);
-        if (world == null) {
-            return;
-        }
+    public PlayerData getPlayerData(UUID playerUuid) {
+        return players.computeIfAbsent(playerUuid, PlayerData::new);
+    }
 
-        var wb = world.getWorldBorder();
-        wb.setCenter(data.getCenterX(), data.getCenterZ());
-        wb.setSize(data.getSize());
+    public void removePlayerData(UUID playerUuid) {
+        players.remove(playerUuid);
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public boolean useActionBar() {
+        return useActionBar;
+    }
+
+    public String getEffect() {
+        return effect;
+    }
+
+    public String getSound() {
+        return sound;
+    }
+
+    public boolean isVisualizerEnabled() {
+        return visualizerEnabled;
+    }
+
+    public int getVisualizerRange() {
+        return visualizerRange;
     }
 }

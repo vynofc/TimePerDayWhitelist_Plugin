@@ -1,8 +1,11 @@
 package fun.vynofc.timeperday;
 
 import fun.vynofc.timeperday.border.BorderCheckTask;
+import fun.vynofc.timeperday.border.BorderData;
 import fun.vynofc.timeperday.border.BorderListener;
 import fun.vynofc.timeperday.border.BorderManager;
+import fun.vynofc.timeperday.border.util.BorderColor;
+import fun.vynofc.timeperday.border.util.Particles;
 import fun.vynofc.timeperday.command.TimeCommand;
 import fun.vynofc.timeperday.command.AdminTimeCommand;
 import fun.vynofc.timeperday.command.DebugTimeCommand;
@@ -12,7 +15,15 @@ import fun.vynofc.timeperday.gui.UserSettingsMenuListener;
 import fun.vynofc.timeperday.gui.UserSettingsMenuService;
 import fun.vynofc.timeperday.listener.PlayerListener;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class TimePerDayPlugin extends JavaPlugin {
 
@@ -66,6 +77,8 @@ public class TimePerDayPlugin extends JavaPlugin {
         getServer().getGlobalRegionScheduler().runAtFixedRate(this,
                 task -> borderCheckTask.run(), 1L, 20L);
 
+        startBorderVisualizer();
+
         getLogger().info("TimePerDayWhitelist aktiviert.");
     }
 
@@ -92,6 +105,31 @@ public class TimePerDayPlugin extends JavaPlugin {
 
     public BorderManager getBorderManager() {
         return borderManager;
+    }
+
+    private void startBorderVisualizer() {
+        if (!borderManager.isVisualizerEnabled()) {
+            return;
+        }
+        final int maxRange = borderManager.getVisualizerRange();
+        Particles.setMaxDistance(maxRange);
+        final AtomicLong tick = new AtomicLong();
+        final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(BorderColor.getColor()), 1);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, task -> {
+            tick.incrementAndGet();
+            final double offsetPercent = (tick.longValue() % 20) / 20d;
+            for (final org.bukkit.entity.Player player : getServer().getOnlinePlayers()) {
+                final World world = player.getWorld();
+                final BorderData border = borderManager.getBorder(world.getName());
+                if (border == null) {
+                    continue;
+                }
+                final List<Location> particleLocations = Particles.at(player, border, offsetPercent);
+                for (final Location location : particleLocations) {
+                    player.spawnParticle(Particle.DUST, location, 1, dustOptions);
+                }
+            }
+        }, 1L, 1L);
     }
 }
 
