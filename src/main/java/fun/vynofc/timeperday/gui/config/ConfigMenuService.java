@@ -24,6 +24,7 @@ public class ConfigMenuService {
     private static final int[] CHUNKY_QUIET_PRESETS = {100, 250, 500, 1000, 2000};
     private static final int[] BORDER_SIZE_PRESETS = {500, 1000, 1500, 2000, 3000, 5000};
     private static final double[] MAX_HEALTH_PRESETS = {20.0, 10.0, 6.0, 2.0};
+    private static final double[] STREAK_BONUS_PRESETS = {0.1, 0.25, 0.5, 1.0, 2.0};
 
     private final TimePerDayPlugin plugin;
     private final PlayerTimeManager timeManager;
@@ -84,6 +85,25 @@ public class ConfigMenuService {
                 maxHealth, Material.APPLE,
                 "Maximales Spielerleben pro Tag.",
                 "Aktuell: " + healthDisplay,
+                "Klicke zum Durchschalten."));
+
+        boolean vaultKeep = plugin.getConfig().getBoolean("vault-keep-on-death", false);
+        inventory.setItem(15, booleanToggleItem("vault-keep-on-death", "XP beim Tod behalten",
+                vaultKeep,
+                "Spieler-Level (XP) gehen beim Tod nicht verloren.",
+                "Klicke zum Umschalten."));
+
+        boolean streakEnabled = plugin.getConfig().getBoolean("streak-bonus", false);
+        inventory.setItem(18, booleanToggleItem("streak-bonus", "Streak-Bonus",
+                streakEnabled,
+                "Vergibt Bonus-Level fuer taegliches Einloggen.",
+                "Klicke zum Umschalten."));
+
+        double streakLevel = plugin.getConfig().getDouble("streak-bonus-level", 0.5D);
+        inventory.setItem(19, doubleCycleItem("streak-bonus-level", "Streak-Level pro Tag",
+                STREAK_BONUS_PRESETS, streakLevel, Material.EXPERIENCE_BOTTLE,
+                "Bonus-Level pro aufeinanderfolgendem Tag.",
+                "Aktuell: " + streakLevel,
                 "Klicke zum Durchschalten."));
 
         inventory.setItem(20, namedItem(Material.OAK_FENCE, "→ Border-Einstellungen",
@@ -288,6 +308,28 @@ public class ConfigMenuService {
                         .build());
                 openMainPage(player);
             }
+            case 15 -> {
+                toggleBooleanConfig("vault-keep-on-death", player);
+                saveAndReloadAll();
+                openMainPage(player);
+            }
+            case 18 -> {
+                toggleBooleanConfig("streak-bonus", player);
+                saveAndReloadAll();
+                openMainPage(player);
+            }
+            case 19 -> {
+                double current = plugin.getConfig().getDouble("streak-bonus-level", 0.5D);
+                double next = cycleDoublePreset(current, STREAK_BONUS_PRESETS);
+                plugin.getConfig().set("streak-bonus-level", next);
+                saveAndReloadAll();
+                player.sendMessage(Component.text()
+                        .append(Component.text("Streak-Level pro Tag auf ", NamedTextColor.GREEN))
+                        .append(Component.text(String.valueOf(next), NamedTextColor.YELLOW))
+                        .append(Component.text(" gesetzt.", NamedTextColor.GREEN))
+                        .build());
+                openMainPage(player);
+            }
             case 20 -> openBorderPage(player);
             case 24 -> openWorldRegenPage(player);
             default -> {}
@@ -441,6 +483,15 @@ public class ConfigMenuService {
         return presets[0];
     }
 
+    private double cycleDoublePreset(double current, double[] presets) {
+        for (int i = 0; i < presets.length; i++) {
+            if (Math.abs(presets[i] - current) < 0.0001D) {
+                return presets[(i + 1) % presets.length];
+            }
+        }
+        return presets[0];
+    }
+
     private void saveAndReloadBorder() {
         plugin.saveConfig();
         borderManager.reloadConfig();
@@ -511,6 +562,23 @@ public class ConfigMenuService {
                 NamedTextColor.RED : NamedTextColor.GREEN));
         List<String> allLines = new ArrayList<>();
         allLines.add("Aktuell: " + display);
+        for (String line : loreLines) {
+            if (!line.startsWith("Aktuell:")) {
+                allLines.add(line);
+            }
+        }
+        meta.lore(buildLore(allLines.toArray(new String[0])));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack doubleCycleItem(String configPath, String name, double[] presets, double current,
+                                      Material material, String... loreLines) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(name, NamedTextColor.GOLD));
+        List<String> allLines = new ArrayList<>();
+        allLines.add("Aktuell: " + current);
         for (String line : loreLines) {
             if (!line.startsWith("Aktuell:")) {
                 allLines.add(line);

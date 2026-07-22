@@ -50,6 +50,8 @@ class PlayerPersistenceManager {
         loadDoubleSection("total-level", manager.totalLevel);
         loadStringSection("last-kit-claim-date", manager.lastKitClaimDate);
         loadBooleanSection("show-action-bar", manager.showActionBar);
+        loadIntSection("streak-count", manager.streakCount);
+        loadStringSection("last-login-date", manager.lastLoginDate);
         manager.spawnKits = readSpawnKits();
     }
 
@@ -64,6 +66,8 @@ class PlayerPersistenceManager {
         manager.totalLevel.forEach((uuid, val) -> dataConfig.set("total-level." + uuid, val));
         manager.lastKitClaimDate.forEach((uuid, val) -> dataConfig.set("last-kit-claim-date." + uuid, val));
         manager.showActionBar.forEach((uuid, val) -> dataConfig.set("show-action-bar." + uuid, val));
+        manager.streakCount.forEach((uuid, val) -> dataConfig.set("streak-count." + uuid, val));
+        manager.lastLoginDate.forEach((uuid, val) -> dataConfig.set("last-login-date." + uuid, val));
         int pendingResetIndex = 0;
         for (UUID uuid : manager.pendingDayOverReset) {
             dataConfig.set("pending-dayover-reset." + pendingResetIndex, uuid.toString());
@@ -87,6 +91,8 @@ class PlayerPersistenceManager {
         manager.totalLevel.clear();
         manager.lastKitClaimDate.clear();
         manager.showActionBar.clear();
+        manager.streakCount.clear();
+        manager.lastLoginDate.clear();
         manager.pendingDayOverReset.clear();
         load();
     }
@@ -123,6 +129,25 @@ class PlayerPersistenceManager {
         for (String key : section.getKeys(false)) {
             try {
                 map.put(UUID.fromString(key), section.getBoolean(key));
+            } catch (IllegalArgumentException e) {
+                manager.plugin.getLogger().warning("Ungueltige UUID in playerdata.yml: " + key);
+            }
+        }
+    }
+
+    private void loadIntSection(String path, ConcurrentHashMap<UUID, Integer> map) {
+        YamlConfiguration dataConfig = manager.dataConfig;
+        if (dataConfig == null || !dataConfig.contains(path)) {
+            return;
+        }
+        var section = dataConfig.getConfigurationSection(path);
+        if (section == null) {
+            return;
+        }
+
+        for (String key : section.getKeys(false)) {
+            try {
+                map.put(UUID.fromString(key), section.getInt(key));
             } catch (IllegalArgumentException e) {
                 manager.plugin.getLogger().warning("Ungueltige UUID in playerdata.yml: " + key);
             }

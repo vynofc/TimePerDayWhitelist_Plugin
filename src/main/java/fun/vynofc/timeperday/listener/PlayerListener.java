@@ -6,6 +6,10 @@ import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class PlayerListener implements Listener {
 
@@ -25,6 +29,7 @@ public class PlayerListener implements Listener {
 
         ensureBorderExists(player);
         enforceMaxHealthOnJoin(player);
+        handleStreakBonus(player);
 
         timeManager.handlePlayerJoinWorldCheck(player);
 
@@ -76,6 +81,58 @@ public class PlayerListener implements Listener {
         plugin.getLogger().info("Border: Keine Border für Welt '" + worldName
                 + "' gefunden, erstelle Standard-Border mit Größe " + ((int) defaultSize));
         borderManager.addBorder(worldName, 0, 0, defaultSize);
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (!timeManager.isVaultKeepOnDeathEnabled()) {
+            return;
+        }
+        event.setKeepLevel(true);
+        event.setDroppedExp(0);
+    }
+
+    private void handleStreakBonus(org.bukkit.entity.Player player) {
+        if (!timeManager.isStreakBonusEnabled()) {
+            return;
+        }
+        var uuid = player.getUniqueId();
+        String today = java.time.LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String lastDate = timeManager.getLastLoginDate(uuid);
+
+        if (today.equals(lastDate)) {
+            return;
+        }
+
+        int streak;
+        if (lastDate.isEmpty()) {
+            streak = 1;
+        } else {
+            try {
+                LocalDate last = LocalDate.parse(lastDate);
+                LocalDate current = LocalDate.parse(today);
+                if (last.plusDays(1).equals(current)) {
+                    streak = timeManager.getStreakCount(uuid) + 1;
+                } else {
+                    streak = 1;
+                }
+            } catch (Exception e) {
+                streak = 1;
+            }
+        }
+
+        timeManager.setStreakCount(uuid, streak);
+        timeManager.setLastLoginDate(uuid, today);
+
+        if (streak > 1) {
+            double bonus = timeManager.getStreakBonusLevel() * streak;
+            timeManager.addTotalLevel(uuid, bonus);
+            player.sendMessage(net.kyori.adventure.text.Component.text()
+                    .append(net.kyori.adventure.text.Component.text("Streak-Bonus: ", net.kyori.adventure.text.format.NamedTextColor.GOLD))
+                    .append(net.kyori.adventure.text.Component.text(streak + " Tage in Folge", net.kyori.adventure.text.format.NamedTextColor.YELLOW))
+                    .append(net.kyori.adventure.text.Component.text(" → +" + String.format("%.1f", bonus) + " Level", net.kyori.adventure.text.format.NamedTextColor.GREEN))
+                    .build());
+        }
     }
 
     private void enforceMaxHealthOnJoin(org.bukkit.entity.Player player) {

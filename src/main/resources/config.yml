@@ -13,6 +13,16 @@ default-limit-minutes: 60
 # zum Deaktivieren. Spielerleben wird auf diesen Wert begrenzt.
 max-health: "aus"
 
+# Bonus-Level fuer taegliches Einloggen an aufeinanderfolgenden Tagen.
+# Deaktiviert: Streak-Bonus wird nicht vergeben.
+streak-bonus: false
+
+# Wie viele Level pro aufeinanderfolgendem Tag gutgeschrieben werden.
+streak-bonus-level: 0.5
+
+# Ob Spieler-Level (XP) beim Tod erhalten bleiben (kein XP-Verlust).
+vault-keep-on-death: false
+
 # Zeitzone fuer den taeglichen Reset (IANA-Format, z. B. Europe/Berlin).
 # Leer lassen fuer Server-Standardzeitzone.
 reset-timezone: "Europe/Berlin"

@@ -41,6 +41,8 @@ public class PlayerTimeManager {
     final ConcurrentHashMap<UUID, Double> totalLevel = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, String> lastKitClaimDate = new ConcurrentHashMap<>();
     final ConcurrentHashMap<UUID, Boolean> showActionBar = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<UUID, Integer> streakCount = new ConcurrentHashMap<>();
+    final ConcurrentHashMap<UUID, String> lastLoginDate = new ConcurrentHashMap<>();
 
     final java.util.Set<UUID> pendingDayOverReset = ConcurrentHashMap.newKeySet();
 
@@ -49,6 +51,9 @@ public class PlayerTimeManager {
     volatile ZoneId resetZoneId;
     volatile NavigableMap<Integer, Map<org.bukkit.Material, Integer>> spawnKits = new TreeMap<>();
     volatile Double maxHealth = null;
+    volatile boolean streakBonusEnabled = false;
+    volatile double streakBonusLevel = 0.5D;
+    volatile boolean vaultKeepOnDeath = false;
     volatile boolean dirty = false;
 
     long tickCount = 0;
@@ -77,6 +82,8 @@ public class PlayerTimeManager {
         tickManager.reloadWarningThresholds();
         worldRegenerationManager.load();
         reloadMaxHealthFromConfig();
+        reloadStreakBonusFromConfig();
+        reloadVaultKeepOnDeathFromConfig();
         dirty = false;
     }
 
@@ -271,6 +278,45 @@ public class PlayerTimeManager {
 
     public boolean isMaxHealthEnabled() {
         return maxHealth != null;
+    }
+
+    public boolean isVaultKeepOnDeathEnabled() {
+        return vaultKeepOnDeath;
+    }
+
+    void reloadStreakBonusFromConfig() {
+        this.streakBonusEnabled = plugin.getConfig().getBoolean("streak-bonus", false);
+        this.streakBonusLevel = plugin.getConfig().getDouble("streak-bonus-level", 0.5D);
+    }
+
+    void reloadVaultKeepOnDeathFromConfig() {
+        this.vaultKeepOnDeath = plugin.getConfig().getBoolean("vault-keep-on-death", false);
+    }
+
+    public boolean isStreakBonusEnabled() {
+        return streakBonusEnabled;
+    }
+
+    public double getStreakBonusLevel() {
+        return streakBonusLevel;
+    }
+
+    public int getStreakCount(UUID uuid) {
+        return streakCount.getOrDefault(uuid, 0);
+    }
+
+    public void setStreakCount(UUID uuid, int count) {
+        streakCount.put(uuid, count);
+        markDirty();
+    }
+
+    public String getLastLoginDate(UUID uuid) {
+        return lastLoginDate.getOrDefault(uuid, "");
+    }
+
+    public void setLastLoginDate(UUID uuid, String date) {
+        lastLoginDate.put(uuid, date);
+        markDirty();
     }
 
     static DateTimeFormatter getDateFormatter() {
