@@ -16,6 +16,10 @@ commands:
     description: Zeigt die verbleibende Spielzeit und Einstellungen an
     usage: /tpd [time|settings]
     permission: timeperday.use
+  tpdconfig:
+    description: Konfiguration des Plugins per GUI anpassen
+    usage: /tpdconfig
+    permission: timeperday.admin
   tpddebug:
     description: Debug-Events manuell auslösen (z. B. Tageswechsel)
     usage: /tpddebug <dayover|warn|timeout>

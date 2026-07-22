@@ -9,10 +9,13 @@ import fun.vynofc.timeperday.border.util.Particles;
 import fun.vynofc.timeperday.command.TimeCommand;
 import fun.vynofc.timeperday.command.AdminTimeCommand;
 import fun.vynofc.timeperday.command.DebugTimeCommand;
+import fun.vynofc.timeperday.command.ConfigCommand;
 import fun.vynofc.timeperday.gui.AdminMenuListener;
 import fun.vynofc.timeperday.gui.AdminMenuService;
 import fun.vynofc.timeperday.gui.UserSettingsMenuListener;
 import fun.vynofc.timeperday.gui.UserSettingsMenuService;
+import fun.vynofc.timeperday.gui.config.ConfigMenuListener;
+import fun.vynofc.timeperday.gui.config.ConfigMenuService;
 import fun.vynofc.timeperday.listener.PlayerListener;
 import fun.vynofc.timeperday.manager.PlayerTimeManager;
 import org.bukkit.Color;
@@ -30,6 +33,7 @@ public class TimePerDayPlugin extends JavaPlugin {
     private AdminMenuService adminMenuService;
     private UserSettingsMenuService userSettingsMenuService;
     private BorderManager borderManager;
+    private ConfigMenuService configMenuService;
 
     @Override
     public void onEnable() {
@@ -41,11 +45,13 @@ public class TimePerDayPlugin extends JavaPlugin {
         userSettingsMenuService = new UserSettingsMenuService(timeManager);
         borderManager = new BorderManager(this);
         borderManager.load();
+        configMenuService = new ConfigMenuService(this, timeManager, borderManager);
 
         getServer().getPluginManager().registerEvents(new PlayerListener(this, timeManager, borderManager), this);
         getServer().getPluginManager().registerEvents(new AdminMenuListener(adminMenuService), this);
         getServer().getPluginManager().registerEvents(new UserSettingsMenuListener(userSettingsMenuService), this);
         getServer().getPluginManager().registerEvents(new BorderListener(borderManager), this);
+        getServer().getPluginManager().registerEvents(new ConfigMenuListener(configMenuService), this);
 
         AdminTimeCommand adminCmd = new AdminTimeCommand(this, timeManager, adminMenuService, borderManager);
         var adminCommand = getCommand("tpdadmin");
@@ -65,6 +71,12 @@ public class TimePerDayPlugin extends JavaPlugin {
         if (debugCommand != null) {
             debugCommand.setExecutor(debugCmd);
             debugCommand.setTabCompleter(debugCmd);
+        }
+
+        ConfigCommand configCmd = new ConfigCommand(configMenuService);
+        var configCommand = getCommand("tpdconfig");
+        if (configCommand != null) {
+            configCommand.setExecutor(configCmd);
         }
 
         // Globaler Takt läuft im Server-Kontext; spielerbezogene Aktionen werden
