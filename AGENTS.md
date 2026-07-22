@@ -38,7 +38,11 @@ mvn clean package        # or ./build.sh / build.bat (Windows)
 - Runs a **global** fixed-rate scheduler tick (1s, `getGlobalRegionScheduler().runAtFixedRate`) that
   calls `timeManager.tickOnlinePlayers()`. Because this is Folia-compatible, per-player actions
   triggered from the global tick must be delegated to the player's own region scheduler.
-- Runs a second **global** fixed-rate tick (1s) for `BorderCheckTask` — movement/wrap enforcement.
+- Runs a second **global** fixed-rate tick for `BorderCheckTask` — interval configurable via
+  `border-options.check-interval` (default 20 ticks). Per-player checks delegate to the player's
+  region scheduler.
+- Runs a third **global** fixed-rate tick (1 tick) for the border particle visualizer
+  (`startBorderVisualizer()`) — enabled/disabled via `border-options.visualizer-enabled`.
 
 ### Manager split (`manager/` package)
 
@@ -63,10 +67,16 @@ Full border system accessible via `/tpdadmin border ...`:
 - `BorderData` — POJO: world, centerX/Z, radiusX/Z, shape, wrap, bypassPlayers, bounding math.
 - `BorderShape` — Enum: SQUARE, RECTANGLE, CIRCLE, ELLIPSE.
 - `BorderWrapType` — Enum: NONE, DEFAULT, BOTH, RADIAL, X, Z, EARTH.
-- `BorderManager` — Load/save `borders.yml`, apply to Bukkit `WorldBorder` API, add/remove/modify.
+- `PlayerData` — Per-player runtime state: last valid location, bypass flag.
+- `BorderManager` — Load/save `borders.yml`, config loading, dirty-flag save strategy,
+  add/remove/modify, player data tracking.
 - `BorderCommand` — Command handler: add, remove, list, bypass, shape, wrap, setcenter, setradius.
-- `BorderCheckTask` — Movement check every second, wrap logic (radial, x, z, both, earth).
-- `BorderListener` — Teleport redirect (enderpearl/chorus), creature spawn block, block break/place.
+- `BorderCheckTask` — Movement check at configurable interval (default 20 ticks, via
+  `border-options.check-interval`), wrap logic, per-player region scheduler delegation.
+- `BorderListener` — Teleport redirect (enderpearl/chorus gated by config), creature spawn
+  blocking (config-gated), block break/place, player quit cleanup.
+- `util/Particles` — DUST-particle border visualizer, renders border edges around each player.
+- `util/BorderColor` — Visualizer color config (hex) with rainbow fallback.
 
 ### GUI packages (`gui/`)
 
@@ -83,8 +93,8 @@ Full border system accessible via `/tpdadmin border ...`:
 
 ### Listener package (`listener/`)
 
-- `PlayerListener` — onPlayerJoin: handles world check, pending day-over reset, kit granting,
-  join messages, timeout kick.
+- `PlayerListener` — onPlayerJoin: handles world check, border auto-creation fallback
+  (`ensureBorderExists`), pending day-over reset, kit granting, join messages, timeout kick.
 
 ## Key Conventions & Gotchas
 
@@ -171,13 +181,22 @@ Permissions:
 - `timeperday.border.bypass.place` — bypass block place enforcement
 
 Border enforcement:
-- `BorderCheckTask` runs every second via global region scheduler, checks all online players
-  against their world's border. If outside and wrap is set, wraps the player; otherwise
-  teleports to spawn.
-- `BorderListener` handles: teleport redirect (enderpearl/chorus fruit cancelled), creature
-  spawn blocking, block break/place blocking outside the border.
-- Bukkit's built-in `WorldBorder` API is used to visually show the border, while custom
-  logic handles the actual enforcement and wrap behavior.
+- `BorderCheckTask` runs at configurable interval, delegates per-player checks to the player's
+  region scheduler (Folia-compatible). If outside and wrap is set, wraps the player; otherwise
+  teleports to last known valid location or spawn.
+- Crossing effects: configurable particle effect (`border-options.effect`) and sound
+  (`border-options.sound`), plus a message via action bar or chat (`border-options.message`,
+  `border-options.use-action-bar`).
+- `BorderListener` handles: teleport redirect (enderpearl/chorus fruit gated by
+  `border-options.prevent-enderpearl`/`border-options.prevent-chorus-fruit`), creature
+  spawn blocking (gated by `border-options.prevent-mob-spawns`), block break/place blocking.
+- Visual border: particle-based visualizer rendering DUST particles along the border edges
+  (`border-options.visualizer-enabled`, `border-options.visualizer-range`,
+  `border-options.visualizer-color`). No vanilla `WorldBorder` API is used.
+- Auto-creation: on first player join to a world without a border, a default border is
+  created using `world-regeneration.default-border-size`.
+- `BorderManager` uses the same dirty-flag save strategy as `PlayerTimeManager`:
+  `markDirty()` on mutations, `flushIfDirty()` periodic, `forceSave()` on critical points.
 
 ## Debug Command Gate (`tpddebug`)
 
@@ -199,6 +218,8 @@ This prevents accidental debug-triggering even by ops — the gate must be expli
 - `default-limit-minutes` — default daily limit (default 60)
 - `reset-timezone` — IANA timezone for day reset
 - `warnings` — list of remaining-second thresholds for warning messages
+- `border-options` — check-interval, message, use-action-bar, effect, sound, prevent-mob-spawns,
+  prevent-enderpearl, prevent-chorus-fruit, visualizer-enabled, visualizer-range, visualizer-color
 - `world-regeneration` — enabled, world-name-prefix, chunk-radius, chunky-quiet-ms, default-border-size
 - `messages` — MiniMessage templates for kick, warning, join messages
 - `show-on-join` — whether to show join info message
